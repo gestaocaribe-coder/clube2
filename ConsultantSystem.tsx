@@ -36,7 +36,8 @@ import {
     EyeIcon,
     FilterIcon,
     LockClosedIcon,
-    BriefcaseIcon
+    BriefcaseIcon,
+    PresentationChartLineIcon
 } from './components/Icons';
 import { Consultant, ConsultantStats, Sale, Notification, PrivateCustomer, PrivateSale, Material, Lesson, Order } from './types';
 
@@ -695,10 +696,13 @@ const DashboardShell = ({ consultant, children, onLogout }: DashboardShellProps)
         return child;
     });
 
-    // Check if user is distributor, but FORCE consultor if ID is 007053 (Cleide) for demo/testing purposes
-    const isDistributor = (consultant.role === 'leader' || consultant.role === 'admin') && consultant.id !== '007053';
+    // --- Role Definitions ---
+    const isAdmin = consultant.role === 'admin';
+    const isLeader = consultant.role === 'leader';
+    // isDistributor combines Leader and Admin for some shared features
+    const isDistributor = isLeader || isAdmin;
 
-    // Main Menu Items
+    // Main Menu Items (Common to all)
     const menuItems = [
         { id: 'overview', label: 'Visão Geral', icon: <ChartBarIcon /> },
         { id: 'materials', label: 'Materiais de Apoio', icon: <DocumentDuplicateIcon /> },
@@ -707,22 +711,28 @@ const DashboardShell = ({ consultant, children, onLogout }: DashboardShellProps)
         { id: 'new_order', label: 'Fazer Pedido', icon: <ShoppingCartIcon /> },
     ];
 
-    // Expansion Items
+    // Expansion Items (Common to all)
     const expansionItems = [
         { id: 'invite', label: 'Convidar Consultor', icon: <UserPlusIcon /> },
     ];
 
-    // Distributor Only Items (Now visible to everyone but locked for consultants)
+    // Distributor Items (Leaders and Admins)
     const distributorItems = [
         { id: 'business', label: 'Meu Negócio', icon: <BriefcaseIcon /> },
         { id: 'financial', label: 'Financeiro', icon: <BanknotesIcon /> },
     ];
 
+    // Admin Specific Items (Admin Only)
+    const adminItems = [
+        { id: 'admin_panel', label: 'Administração', icon: <PresentationChartLineIcon /> },
+    ];
+
     const renderMenuItem = (item: { id: string, label: string, icon: React.ReactNode }) => {
         const isActive = activeTab === item.id;
         const isNewOrder = item.id === 'new_order';
+        const isAdminItem = item.id === 'admin_panel';
         
-        // Locked logic
+        // Locked logic: If it's a distributor item and user is NOT a distributor
         const isLocked = ['business', 'financial'].includes(item.id) && !isDistributor;
 
         return (
@@ -739,18 +749,18 @@ const DashboardShell = ({ consultant, children, onLogout }: DashboardShellProps)
                 }}
                 className={`w-full flex items-center space-x-4 px-6 py-4 rounded-xl transition-all duration-200 group relative ${
                     isActive 
-                        ? 'bg-white text-[#2E5C31] shadow-lg transform scale-[1.02]' 
+                        ? (isAdminItem ? 'bg-white text-purple-800 shadow-lg transform scale-[1.02]' : 'bg-white text-[#2E5C31] shadow-lg transform scale-[1.02]')
                         : (isLocked ? 'text-white opacity-50 cursor-not-allowed' : 'text-white hover:bg-white/10')
                 }`}
             >
                 <div className={`transition-colors duration-200 ${
                     isActive 
-                        ? 'text-[#2E5C31]' 
-                        : (isNewOrder ? 'text-yellow-400' : 'text-white')
+                        ? (isAdminItem ? 'text-purple-800' : 'text-[#2E5C31]')
+                        : (isNewOrder ? 'text-yellow-400' : isAdminItem ? 'text-purple-300' : 'text-white')
                 }`}>
                     {item.icon}
                 </div>
-                <span className={`text-base ${isActive ? 'font-extrabold' : 'font-semibold'} ${!isActive && isNewOrder ? 'text-yellow-400' : ''}`}>
+                <span className={`text-base ${isActive ? 'font-extrabold' : 'font-semibold'} ${!isActive && isNewOrder ? 'text-yellow-400' : ''} ${!isActive && isAdminItem ? 'text-purple-300' : ''}`}>
                     {item.label}
                 </span>
                 
@@ -858,6 +868,17 @@ const DashboardShell = ({ consultant, children, onLogout }: DashboardShellProps)
                         
                         {/* Distributor Section (Visible to all, locked for consultants) */}
                         {distributorItems.map(renderMenuItem)}
+
+                        {/* Admin Section (Only if Admin) */}
+                        {isAdmin && (
+                            <>
+                                <div className="py-2">
+                                    <hr className="border-purple-500/30" />
+                                </div>
+                                <p className="text-purple-300/60 text-[10px] font-bold uppercase tracking-widest px-6 pt-2 pb-1">Gestão</p>
+                                {adminItems.map(renderMenuItem)}
+                            </>
+                        )}
                     </nav>
 
                     {/* Logout Footer */}
@@ -882,9 +903,11 @@ const DashboardShell = ({ consultant, children, onLogout }: DashboardShellProps)
 };
 
 const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string, setActiveTab?: (tab: string) => void, consultant: Consultant }) => {
-    // Determine content based on activeTab
-    // Force consultor for Cleide (007053) for demo purposes
-    const isDistributor = (consultant.role === 'leader' || consultant.role === 'admin') && consultant.id !== '007053';
+    // --- Role Definitions ---
+    const isAdmin = consultant.role === 'admin';
+    const isLeader = consultant.role === 'leader';
+    // Distributor logic
+    const isDistributor = isLeader || isAdmin;
 
     // -- State for Dynamic Data --
     const [materials, setMaterials] = useState<Material[]>([]);
@@ -1014,12 +1037,8 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
 
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
         
-        // 1. ABRIR WHATSAPP IMEDIATAMENTE
-        // Isso previne bloqueio de popups em celulares e garante que a venda não seja perdida.
         window.open(whatsappUrl, '_blank');
 
-        // 2. SALVAR NO BANCO EM SEGUNDO PLANO
-        // Se houver erro de rede ou banco, o cliente já está no WhatsApp, então a venda acontece.
         const newOrder = {
             id: `PED-${Math.floor(1000 + Math.random() * 9000)}`,
             consultant_id: consultant.id,
@@ -1033,7 +1052,6 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
             if (error) {
                 console.error("Erro ao salvar pedido em background (ignorado para UX):", error);
             } else {
-                // Atualiza a lista de pedidos sem recarregar a página
                 fetchOrders();
             }
         });
@@ -1079,9 +1097,13 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
                                 <p className="text-gray-500 text-sm font-medium mt-1">Acervo de marketing para suas redes sociais.</p>
                             </div>
                         </div>
-                        <button className="bg-[#064e3b] hover:bg-[#064e3b]/90 text-white font-bold py-3 px-8 rounded-2xl text-sm shadow-lg transition-transform hover:scale-105 active:scale-95">
-                            + Novo Material
-                        </button>
+                        {/* Only Admin can add materials */}
+                        {isAdmin && (
+                            <button className="bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-8 rounded-2xl text-sm shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                                <PlusIcon className="h-4 w-4" />
+                                Novo Material
+                            </button>
+                        )}
                     </div>
 
                     {/* Filter Tabs */}
@@ -1114,9 +1136,13 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
                                             Baixar
                                         </button>
                                     </div>
-                                    <button className="absolute bottom-4 right-4 bg-white/80 text-red-500 p-2 rounded-full hover:bg-red-50 transition-colors shadow-sm">
-                                        <CloseIcon className="h-4 w-4" />
-                                    </button>
+                                    
+                                    {/* Admin Delete Button Mock */}
+                                    {isAdmin && (
+                                        <button className="absolute bottom-4 right-4 bg-white/80 text-red-500 p-2 rounded-full hover:bg-red-50 transition-colors shadow-sm z-20">
+                                            <CloseIcon className="h-4 w-4" />
+                                        </button>
+                                    )}
                                 </div>
                                 
                                 {/* Footer Info */}
@@ -1147,9 +1173,13 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
                                 <p className="text-gray-500 text-sm font-medium mt-1">Universidade Corporativa Brotos da Terra</p>
                             </div>
                         </div>
-                        <button className="bg-[#064e3b] hover:bg-[#064e3b]/90 text-white font-bold py-3 px-8 rounded-2xl text-sm shadow-lg transition-transform hover:scale-105 active:scale-95">
-                            + Adicionar Aula
-                        </button>
+                        {/* Only Admin can add lessons */}
+                        {isAdmin && (
+                            <button className="bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-8 rounded-2xl text-sm shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                                <PlusIcon className="h-4 w-4" />
+                                Adicionar Aula
+                            </button>
+                        )}
                     </div>
 
                     {/* Filter Tabs */}
@@ -1771,6 +1801,92 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
                         </div>
                     </div>
                  </div>
+             )}
+
+             {/* Painel Administrativo Exclusivo */}
+             {activeTab === 'admin_panel' && isAdmin && (
+                <div className="space-y-8 animate-fade-in">
+                    <div className="flex items-center gap-5 mb-8">
+                        <div className="bg-purple-700 p-4 rounded-3xl text-white shadow-sm">
+                            <PresentationChartLineIcon className="h-8 w-8" />
+                        </div>
+                        <div>
+                            <h2 className="text-3xl font-serif font-bold text-brand-green-dark">Painel do Administrador</h2>
+                            <p className="text-gray-500 text-sm font-medium mt-1">Visão global e gerenciamento do sistema.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-purple-600">
+                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Vendas Totais (Mês)</p>
+                             <h3 className="text-2xl font-bold text-gray-800 mt-1">R$ 45.250,00</h3>
+                             <p className="text-green-500 text-xs font-bold mt-2 flex items-center gap-1">
+                                 <TrendingUpIcon className="h-3 w-3" /> +15% vs mês anterior
+                             </p>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-500">
+                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Novos Consultores</p>
+                             <h3 className="text-2xl font-bold text-gray-800 mt-1">24</h3>
+                             <p className="text-gray-400 text-xs mt-2">Nesta semana</p>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-orange-500">
+                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pedidos Pendentes</p>
+                             <h3 className="text-2xl font-bold text-gray-800 mt-1">8</h3>
+                             <button className="text-xs text-orange-500 font-bold mt-2 hover:underline">Ver todos</button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+                        <h3 className="text-lg font-bold text-brand-green-dark mb-6">Ações Rápidas</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <button className="flex items-center justify-center gap-3 p-4 rounded-xl border-2 border-dashed border-gray-300 hover:border-purple-500 hover:bg-purple-50 text-gray-500 hover:text-purple-700 transition-all font-bold text-sm">
+                                <UserPlusIcon className="h-5 w-5" />
+                                Cadastrar Líder
+                            </button>
+                            <button className="flex items-center justify-center gap-3 p-4 rounded-xl border-2 border-dashed border-gray-300 hover:border-purple-500 hover:bg-purple-50 text-gray-500 hover:text-purple-700 transition-all font-bold text-sm">
+                                <PhotoIcon className="h-5 w-5" />
+                                Gerenciar Banners
+                            </button>
+                            <button className="flex items-center justify-center gap-3 p-4 rounded-xl border-2 border-dashed border-gray-300 hover:border-purple-500 hover:bg-purple-50 text-gray-500 hover:text-purple-700 transition-all font-bold text-sm">
+                                <BanknotesIcon className="h-5 w-5" />
+                                Configurar Comissões
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-brand-green-dark">Últimos Cadastros</h3>
+                            <button className="text-sm font-bold text-purple-600 hover:text-purple-800">Ver todos</button>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-gray-100 text-xs text-gray-400 uppercase tracking-wider">
+                                        <th className="py-3 px-2 font-bold">Nome</th>
+                                        <th className="py-3 px-2 font-bold">ID</th>
+                                        <th className="py-3 px-2 font-bold">Data</th>
+                                        <th className="py-3 px-2 font-bold">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="border-b border-gray-50 hover:bg-gray-50">
+                                        <td className="py-3 px-2 font-semibold text-gray-700">Maria Silva</td>
+                                        <td className="py-3 px-2 text-sm text-gray-500">104050</td>
+                                        <td className="py-3 px-2 text-sm text-gray-500">Hoje</td>
+                                        <td className="py-3 px-2"><span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full font-bold">Ativo</span></td>
+                                    </tr>
+                                    <tr className="border-b border-gray-50 hover:bg-gray-50">
+                                        <td className="py-3 px-2 font-semibold text-gray-700">José Souza</td>
+                                        <td className="py-3 px-2 text-sm text-gray-500">104051</td>
+                                        <td className="py-3 px-2 text-sm text-gray-500">Ontem</td>
+                                        <td className="py-3 px-2"><span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full font-bold">Pendente</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
              )}
         </div>
     );
