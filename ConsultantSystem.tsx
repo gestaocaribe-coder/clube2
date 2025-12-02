@@ -891,6 +891,12 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
     const [lessons, setLessons] = useState<Lesson[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     
+    // Fetch Data Logic
+    const fetchOrders = async () => {
+        const { data: ordersData } = await supabase.from('orders').select('*');
+        if (ordersData) setOrders(ordersData as Order[]);
+    }
+
     // Fetch Data from Supabase
     useEffect(() => {
         const fetchData = async () => {
@@ -902,9 +908,8 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
             const { data: lessonsData } = await supabase.from('lessons').select('*');
             if (lessonsData) setLessons(lessonsData);
 
-            // Orders (Own orders based on RLS)
-            const { data: ordersData } = await supabase.from('orders').select('*');
-            if (ordersData) setOrders(ordersData);
+            // Orders
+            fetchOrders();
         };
         fetchData();
     }, [consultant.id]);
@@ -989,28 +994,10 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
         setTimeout(() => setCopied(false), 2000);
     };
     
-    const handleFinalizeOrder = async () => {
+    const handleFinalizeOrder = () => {
         if (!cep) {
             alert('Por favor, informe o CEP para entrega.');
             return;
-        }
-
-        // Insert Order into DB
-        const newOrder = {
-            id: `PED-${Math.floor(1000 + Math.random() * 9000)}`,
-            consultant_id: consultant.id,
-            date: new Date().toLocaleDateString('pt-BR'),
-            items: `${orderQty}x Caixa Pomada de Copaíba`,
-            total: formatCurrency(total),
-            status: 'Pendente'
-        };
-
-        // Attempt to save to DB, but don't block the user if it fails
-        const { error } = await supabase.from('orders').insert([newOrder]);
-
-        if (error) {
-            console.error("Erro ao salvar pedido no banco de dados (ignorando para fluxo WhatsApp):", error);
-            // We proceed to WhatsApp anyway, so no alert is shown to the user.
         }
 
         const phoneNumber = "557199190515"; 
@@ -1026,13 +1013,30 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
             `Gostaria de finalizar meu pedido!`;
 
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
         
-        // Refresh orders if successful
-        if (!error) {
-            const { data: ordersData } = await supabase.from('orders').select('*');
-            if (ordersData) setOrders(ordersData as Order[]);
-        }
+        // 1. ABRIR WHATSAPP IMEDIATAMENTE
+        // Isso previne bloqueio de popups em celulares e garante que a venda não seja perdida.
+        window.open(whatsappUrl, '_blank');
+
+        // 2. SALVAR NO BANCO EM SEGUNDO PLANO
+        // Se houver erro de rede ou banco, o cliente já está no WhatsApp, então a venda acontece.
+        const newOrder = {
+            id: `PED-${Math.floor(1000 + Math.random() * 9000)}`,
+            consultant_id: consultant.id,
+            date: new Date().toLocaleDateString('pt-BR'),
+            items: `${orderQty}x Caixa Pomada de Copaíba`,
+            total: formatCurrency(total),
+            status: 'Pendente'
+        };
+
+        supabase.from('orders').insert([newOrder]).then(({ error }) => {
+            if (error) {
+                console.error("Erro ao salvar pedido em background (ignorado para UX):", error);
+            } else {
+                // Atualiza a lista de pedidos sem recarregar a página
+                fetchOrders();
+            }
+        });
     };
 
     // Bonus Calculation Logic
