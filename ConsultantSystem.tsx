@@ -1005,11 +1005,12 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
             status: 'Pendente'
         };
 
+        // Attempt to save to DB, but don't block the user if it fails
         const { error } = await supabase.from('orders').insert([newOrder]);
 
         if (error) {
-            alert('Erro ao salvar pedido no sistema, mas continuaremos via WhatsApp.');
-            console.error(error);
+            console.error("Erro ao salvar pedido no banco de dados (ignorando para fluxo WhatsApp):", error);
+            // We proceed to WhatsApp anyway, so no alert is shown to the user.
         }
 
         const phoneNumber = "557199190515"; 
@@ -1027,9 +1028,11 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
         
-        // Refresh orders
-        const { data: ordersData } = await supabase.from('orders').select('*');
-        if (ordersData) setOrders(ordersData as Order[]);
+        // Refresh orders if successful
+        if (!error) {
+            const { data: ordersData } = await supabase.from('orders').select('*');
+            if (ordersData) setOrders(ordersData as Order[]);
+        }
     };
 
     // Bonus Calculation Logic
