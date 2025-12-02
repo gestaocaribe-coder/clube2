@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from './lib/supabaseClient';
 import { 
@@ -1011,7 +1012,7 @@ const Dashboard = ({ activeTab, setActiveTab, consultant }: { activeTab?: string
             console.error(error);
         }
 
-        const phoneNumber = "5511999999999"; // Substitua pelo número real de atendimento da Brotos
+        const phoneNumber = "557199190515"; 
         
         const message = `*NOVO PEDIDO - CLUBE BROTOS* 🌱\n\n` +
             `👤 *Consultor:* ${consultant.name} (ID: ${consultant.id})\n\n` +
