@@ -92,7 +92,8 @@ const ThemeContext = createContext<ThemeContextType>({
     colors: THEMES.green
 });
 
-export const AdminThemeProvider = ({ children }: { children: React.ReactNode }) => {
+// FIX: Use PropsWithChildren to make children optional, resolving the error in App.tsx
+export const AdminThemeProvider = ({ children }: React.PropsWithChildren<{}>) => {
     const [currentTheme, setCurrentTheme] = useState<AdminTheme>(() => {
         return (localStorage.getItem('admin_theme') as AdminTheme) || 'green';
     });
@@ -1070,8 +1071,9 @@ export const AdminOverviewView = () => {
                 ].map((card, idx) => (
                     <Link to="/admin/usuarios" key={idx} className={`${card.bg} p-6 rounded-3xl border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all group`}>
                         <div className="flex justify-between items-start mb-4">
-                            <div className="p-3 rounded-2xl bg-white shadow-sm group-hover:scale-110 transition-transform">
-                                <card.icon className="h-6 w-6" style={{ color: card.color }} />
+                            {/* FIX: Move style to parent div as Icon components don't accept style prop */}
+                            <div className="p-3 rounded-2xl bg-white shadow-sm group-hover:scale-110 transition-transform" style={{ color: card.color }}>
+                                <card.icon className="h-6 w-6" />
                             </div>
                             <span className="text-3xl font-bold text-gray-900">{card.value}</span>
                         </div>
