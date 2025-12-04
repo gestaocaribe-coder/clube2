@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, createContext, useContext } from 'react';
 import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
@@ -50,7 +51,7 @@ import {
 import { Consultant, Order, Sale, Material, Lesson, Withdrawal, GoalMetric } from './types';
 
 // --- Version Marker for Git ---
-// v1.5.1 - Fix Admin Login Redirect & Force Git Deploy
+// v1.5.3 - Force Git Deploy (Full Restoration)
 
 // --- Context Type for Outlet ---
 type DashboardContextType = {
@@ -94,7 +95,6 @@ const ThemeContext = createContext<ThemeContextType>({
     colors: THEMES.green
 });
 
-// FIX: Use PropsWithChildren to make children optional, resolving the error in App.tsx
 export const AdminThemeProvider = ({ children }: React.PropsWithChildren<{}>) => {
     const [currentTheme, setCurrentTheme] = useState<AdminTheme>(() => {
         return (localStorage.getItem('admin_theme') as AdminTheme) || 'green';
@@ -338,6 +338,20 @@ export const LoginScreen = () => {
                     throw new Error('ID de consultor não encontrado.');
                 }
                 emailToLogin = consultant.email;
+                
+                // --- SMART REDIRECT FOR ADMIN ---
+                if (consultant.role === 'admin') {
+                     // Authenticate first
+                     const { error: authError } = await supabase.auth.signInWithPassword({
+                         email: emailToLogin,
+                         password: password,
+                     });
+                     if (authError) throw authError;
+
+                     // Redirect to Admin Dashboard
+                     navigate('/admin/dashboard');
+                     return;
+                }
             }
 
             // Sign In
@@ -348,21 +362,7 @@ export const LoginScreen = () => {
 
             if (authError) throw authError;
 
-            // --- SECURITY & SMART REDIRECT ---
-            // If admin tries to login here, redirect them to admin dashboard instead of error
-            if (data.user) {
-                 const { data: profile } = await supabase
-                    .from('consultants')
-                    .select('role')
-                    .eq('auth_id', data.user.id)
-                    .single();
-                
-                 if (profile && profile.role === 'admin') {
-                     navigate('/admin/dashboard');
-                     return;
-                 }
-            }
-
+            // Auth successful, Profile check in ProtectedRoute will handle redirection
             navigate('/consultor/dashboard');
 
         } catch (err: any) {
@@ -397,7 +397,7 @@ export const LoginScreen = () => {
 
                     <form onSubmit={handleLogin} className="space-y-6">
                         <div>
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">ID Consultor</label>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">ID Consultor ou E-mail</label>
                             <div className="relative">
                                 <UserCircleIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                 <input
@@ -405,7 +405,7 @@ export const LoginScreen = () => {
                                     value={identifier}
                                     onChange={(e) => setIdentifier(e.target.value)}
                                     className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green-mid focus:border-transparent outline-none transition-all font-medium text-gray-800 placeholder-gray-400"
-                                    placeholder="Digite seu ID"
+                                    placeholder="Digite seu ID ou E-mail"
                                     required
                                 />
                             </div>
@@ -503,12 +503,8 @@ export const AdminLoginScreen = () => {
                          if (profileError) console.error('Error creating admin profile:', profileError);
                      }
                 } else {
-                    // AUTO-CORRECT ROLE if exists but wrong
-                    const { error: updateError } = await supabase
-                        .from('consultants')
-                        .update({ role: 'admin' })
-                        .eq('id', '000000');
-                    if(updateError) console.error('Error auto-correcting admin role:', updateError);
+                    // Auto-Correct Role to Admin if exists
+                    await supabase.from('consultants').update({ role: 'admin' }).eq('id', '000000');
                 }
 
                 // Log in as Admin
@@ -864,11 +860,10 @@ export const DashboardShell = ({ children, consultant }: { children?: React.Reac
                             <div>
                                 <h4 className="px-4 text-[10px] font-extrabold text-white/30 uppercase tracking-[0.2em] mb-3">Sistema e Suporte</h4>
                                 <div className="space-y-1">
+                                    <NavItem to="/admin/materiais" icon={PhotoIcon} label="Materiais de Apoio" />
+                                    <NavItem to="/admin/unibrotos" icon={AcademicCapIcon} label="UniBrotos" />
                                     <NavItem to="/admin/suporte" icon={ChatIcon} label="Suporte e Tickets" />
                                     <NavItem to="/admin/config" icon={ClipboardListIcon} label="Configurações" />
-                                    {/* NEW BUTTONS FOR QUICK ACCESS */}
-                                    <NavItem to="/admin/unibrotos" icon={AcademicCapIcon} label="UNIBOS (Treinamento)" />
-                                    <NavItem to="/admin/materiais" icon={PhotoIcon} label="Materiais de Apoio" />
                                 </div>
                             </div>
                         </>
@@ -1061,19 +1056,13 @@ export const OverviewView = () => {
     );
 };
 
-// --- NEW COMPONENT: Consultant Ranking ---
 const ConsultantRanking = () => {
-    const parseMoney = (value: string) => {
-        return parseFloat(value.replace('R$ ', '').replace('.', '').replace(',', '.'));
-    };
-
-    const sortedTeam = [...DB_LOCAL_STATE.team]
-        .map(c => ({
-            ...c,
-            salesValue: parseMoney(c.sales)
-        }))
-        .sort((a, b) => b.salesValue - a.salesValue)
-        .slice(0, 10);
+    // Dynamically sort consultants by sales
+    const sortedTeam = [...DB_LOCAL_STATE.team].sort((a, b) => {
+        const valA = parseFloat(a.sales.replace('R$ ', '').replace('.', '').replace(',', '.'));
+        const valB = parseFloat(b.sales.replace('R$ ', '').replace('.', '').replace(',', '.'));
+        return valB - valA;
+    }).slice(0, 10); // Top 10
 
     return (
         <div className="bg-brand-green-dark rounded-[2.5rem] p-8 md:p-12 text-white shadow-2xl relative overflow-hidden">
@@ -1081,43 +1070,56 @@ const ConsultantRanking = () => {
              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-green-mid rounded-full blur-[120px] opacity-20 translate-x-1/3 -translate-y-1/3"></div>
 
              <div className="relative z-10">
-                 <div className="flex items-center justify-between mb-8">
-                     <h2 className="text-3xl font-serif font-bold">Ranking de Consultores</h2>
-                     <span className="px-4 py-1 bg-white/10 rounded-full text-xs font-bold uppercase tracking-widest border border-white/10">Top 10 Vendas</span>
-                 </div>
-                 
-                 <div className="space-y-4">
-                    {sortedTeam.map((consultant, index) => (
-                        <div key={consultant.id} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors group">
-                            <div className="flex items-center gap-4">
-                                 <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shadow-lg ${
-                                     index === 0 ? 'bg-gradient-to-br from-yellow-300 to-yellow-600 text-yellow-900' :
-                                     index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-gray-900' :
-                                     index === 2 ? 'bg-gradient-to-br from-orange-300 to-orange-600 text-orange-900' :
-                                     'bg-white/10 text-white border border-white/10'
-                                 }`}>
-                                     {index + 1}
-                                 </div>
-                                 <div>
-                                     <p className="font-bold text-lg group-hover:text-brand-green-mid transition-colors">{consultant.name}</p>
-                                     <div className="flex items-center gap-2">
-                                         <span className="text-xs text-white/50">{consultant.role}</span>
-                                         <span className="w-1 h-1 bg-white/20 rounded-full"></span>
-                                         <span className="text-xs text-white/50">ID: {consultant.id}</span>
-                                     </div>
-                                 </div>
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="p-3 bg-brand-green-mid rounded-xl">
+                        <TrendingUpIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-serif font-bold">Ranking de Consultores</h2>
+                        <p className="text-white/60">Os maiores destaques da sua rede neste mês.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    {/* Top 3 Podium */}
+                    {sortedTeam.slice(0, 3).map((consultant, index) => (
+                        <div key={consultant.id} className={`relative p-6 rounded-3xl border ${index === 0 ? 'bg-yellow-500/20 border-yellow-500/50' : 'bg-white/5 border-white/10'} backdrop-blur-md flex flex-col items-center text-center transform hover:-translate-y-2 transition-transform`}>
+                            {index === 0 && <span className="absolute -top-4 bg-yellow-500 text-black font-bold px-4 py-1 rounded-full text-xs uppercase tracking-widest shadow-lg">Líder do Mês</span>}
+                            <div className="h-20 w-20 rounded-full border-4 border-white/20 mb-4 flex items-center justify-center bg-brand-green-dark text-2xl font-bold">
+                                {consultant.name.charAt(0)}
                             </div>
-                            <div className="text-right">
-                                <p className="font-mono font-bold text-xl text-brand-green-mid">{consultant.sales}</p>
-                                <p className="text-xs text-white/40 uppercase tracking-wider">Volume</p>
-                            </div>
+                            <h3 className="text-xl font-bold mb-1">{consultant.name}</h3>
+                            <p className="text-sm opacity-70 mb-4">{consultant.role}</p>
+                            <span className="text-2xl font-bold text-brand-green-mid">{consultant.sales}</span>
                         </div>
                     ))}
-                 </div>
+                </div>
+
+                {/* List for the rest */}
+                <div className="bg-white/5 rounded-3xl border border-white/10 overflow-hidden">
+                    <table className="w-full text-left">
+                        <thead className="bg-black/20 text-white/50 text-xs font-bold uppercase tracking-widest">
+                            <tr>
+                                <th className="px-6 py-4">Posição</th>
+                                <th className="px-6 py-4">Consultor</th>
+                                <th className="px-6 py-4 text-right">Volume de Vendas</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-sm">
+                            {sortedTeam.slice(3).map((consultant, index) => (
+                                <tr key={consultant.id} className="hover:bg-white/5 transition-colors">
+                                    <td className="px-6 py-4 font-bold opacity-50">#{index + 4}</td>
+                                    <td className="px-6 py-4 font-medium">{consultant.name}</td>
+                                    <td className="px-6 py-4 text-right font-bold text-brand-green-mid">{consultant.sales}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
              </div>
         </div>
-    )
-}
+    );
+};
 
 export const AdminOverviewView = () => {
     // Network Summary Logic
@@ -1144,7 +1146,6 @@ export const AdminOverviewView = () => {
                 ].map((card, idx) => (
                     <Link to="/admin/usuarios" key={idx} className={`${card.bg} p-6 rounded-3xl border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all group`}>
                         <div className="flex justify-between items-start mb-4">
-                            {/* FIX: Move style to parent div as Icon components don't accept style prop */}
                             <div className="p-3 rounded-2xl bg-white shadow-sm group-hover:scale-110 transition-transform" style={{ color: card.color }}>
                                 <card.icon className="h-6 w-6" />
                             </div>
@@ -1155,7 +1156,7 @@ export const AdminOverviewView = () => {
                 ))}
             </div>
 
-            {/* Consultant Ranking (Replaces Revenue Simulator) */}
+            {/* Consultant Ranking (Replaces Simulator) */}
             <ConsultantRanking />
         </div>
     );
@@ -1564,3 +1565,61 @@ export const AdminWithdrawalsView = () => {
         </div>
     );
 };
+
+// --- NEW ADMIN CONTENT VIEWS (From Audit) ---
+
+export const AdminUniBrotosView = () => (
+    <div className="p-8 animate-fade-in">
+        <h1 className="text-3xl font-serif font-bold text-brand-green-dark mb-6">📺 Gerenciador de Conteúdo UniBrotos</h1>
+        <p className="text-gray-600 mb-8">Painel exclusivo para upload, edição e organização dos módulos de treinamento da rede.</p>
+        
+        <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+                <h3 className="font-bold text-brand-green-dark mb-2">Upload de Módulo</h3>
+                <p className="text-sm text-gray-600 mb-4">Adicione novos vídeos ou PDFs.</p>
+                <button className="w-full bg-brand-green-mid text-white font-bold py-2 rounded-lg hover:bg-brand-green-dark">Novo Upload</button>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                <h3 className="font-bold text-gray-800 mb-2">Organizar Seções</h3>
+                <p className="text-sm text-gray-600 mb-4">Edite a ordem das trilhas.</p>
+                <button className="w-full bg-gray-200 text-gray-700 font-bold py-2 rounded-lg hover:bg-gray-300">Gerenciar</button>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                <h3 className="font-bold text-gray-800 mb-2">Métricas de Acesso</h3>
+                <p className="text-sm text-gray-600 mb-4">Visualize o consumo de conteúdo.</p>
+                <button className="w-full bg-gray-200 text-gray-700 font-bold py-2 rounded-lg hover:bg-gray-300">Ver Relatório</button>
+            </div>
+        </div>
+        
+        <div className="mt-8 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Listagem de Módulos Ativos</h2>
+            <div className="text-center py-10 text-gray-400">
+                Tabela de Módulos (Vídeos, PDFs, Status) carregará aqui...
+            </div>
+        </div>
+    </div>
+);
+
+export const AdminMateriaisView = () => (
+    <div className="p-8 animate-fade-in">
+        <h1 className="text-3xl font-serif font-bold text-brand-green-dark mb-6">📄 Repositório de Materiais Exclusivos</h1>
+        <p className="text-gray-600 mb-8">Documentação confidencial, relatórios de mercado e manuais de compliance para uso interno da administração.</p>
+        
+        <div className="p-6 bg-white rounded-xl shadow-lg border border-gray-100">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Upload de Documento</h2>
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-gray-50 transition-colors cursor-pointer">
+                <p className="text-gray-500">Arraste arquivos aqui ou clique para selecionar</p>
+            </div>
+            
+            <h2 className="text-xl font-semibold text-gray-800 mt-8 mb-4">Documentos Atuais</h2>
+            <div className="space-y-2">
+                {['Relatório Q4 2025.pdf', 'Manual de Auditoria Interna.docx', 'Planejamento Estratégico 2026.pdf'].map((doc, i) => (
+                    <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                        <span className="text-gray-700 font-medium">{doc}</span>
+                        <DownloadIcon className="h-5 w-5 text-gray-400 hover:text-brand-green-mid cursor-pointer" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    </div>
+);
