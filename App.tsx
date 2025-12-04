@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
@@ -25,6 +24,7 @@ import {
     AdminSettingsView,
     AdminThemeProvider // Import Provider
 } from './ConsultantSystem';
+import { GodMode } from './GodMode'; // Import God Mode
 
 // --- Auth Guard Component ---
 // Checks if user is logged in and handles role-based redirection
@@ -80,23 +80,17 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
     }
 
     // Role Logic
-    // Admin access: 'admin'
-    // Consultant access: 'consultant', 'leader' (and 'admin' typically can view consultant views, but we separate them here for cleaner UX)
-    
     const isAllowed = allowedRoles.includes(user.role) || (allowedRoles.includes('leader') && user.role === 'admin');
 
     // Strict separation redirect logic
-    // If an Admin tries to go to /consultor, send them to /admin
     if (user.role === 'admin' && location.pathname.startsWith('/consultor')) {
         return <Navigate to="/admin/dashboard" replace />;
     }
     
-    // If a Consultant tries to go to /admin, send them to /consultor
     if (user.role !== 'admin' && location.pathname.startsWith('/admin')) {
          return <Navigate to="/consultor/dashboard" replace />;
     }
 
-    // If roles don't match the route requirement (generic fallback)
     if (!allowedRoles.includes(user.role) && !(user.role === 'admin' && allowedRoles.includes('leader'))) {
          const target = user.role === 'admin' ? '/admin/dashboard' : '/consultor/dashboard';
          return <Navigate to={target} replace />;
@@ -122,6 +116,9 @@ export default function App() {
             {/* SECURE ADMIN LOGIN ROUTE */}
             <Route path="/portal-master" element={<AdminLoginScreen />} />
 
+            {/* GOD MODE (Hidden & Restricted) */}
+            <Route path="/god-mode" element={<GodMode />} />
+
             {/* Admin Routes (New Structure) */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']} />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
@@ -139,11 +136,11 @@ export default function App() {
                 <Route path="suporte" element={<AdminSupportView />} />
                 <Route path="config" element={<AdminSettingsView />} />
 
-                {/* Legacy/Specific Routes kept for specific logic if needed, but removed from sidebar */}
+                {/* Legacy/Specific Routes */}
                 <Route path="metas" element={<AdminGoalsView />} />
                 <Route path="saques" element={<AdminWithdrawalsView />} />
                 
-                {/* Operational routes accessible by URL but hidden from menu */}
+                {/* Hidden Operational routes */}
                 <Route path="materiais" element={<MaterialsView />} />
                 <Route path="unibrotos" element={<UniBrotosView />} />
                 <Route path="meus-pedidos" element={<MyOrdersView />} />
