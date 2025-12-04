@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
@@ -980,7 +981,7 @@ export const DashboardShell = ({ consultant, children }: { consultant: Consultan
 // --- AUTH SCREENS ---
 
 export const LoginScreen = () => {
-    const [email, setEmail] = useState('');
+    const [consultantId, setConsultantId] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -992,22 +993,75 @@ export const LoginScreen = () => {
         setError('');
 
         try {
+            // --- 1. MAGIC ADMIN LOGIC (Auto-provisioning) ---
+            if (consultantId === '000000' && password === 'jo1234') {
+                const adminEmail = 'admin@brotos.com';
+                
+                // Tenta logar diretamente
+                const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+                    email: adminEmail,
+                    password: password
+                });
+
+                if (loginData.session) {
+                     navigate('/admin/dashboard');
+                     return;
+                }
+
+                // Se falhar, tenta criar (se for o primeiro acesso)
+                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                    email: adminEmail,
+                    password: password
+                });
+
+                if (signUpError) throw new Error('Falha ao criar admin automático.');
+
+                if (signUpData.user) {
+                     // Cria perfil de admin
+                     const { error: profileError } = await supabase.from('consultants').upsert({
+                         id: '000000',
+                         auth_id: signUpData.user.id,
+                         name: 'Administrador Geral',
+                         email: adminEmail,
+                         role: 'admin',
+                         whatsapp: '',
+                         created_at: new Date().toISOString()
+                     });
+
+                     if (profileError) throw profileError;
+                     navigate('/admin/dashboard');
+                     return;
+                }
+            }
+
+            // --- 2. NORMAL CONSULTANT LOGIC (ID Lookup) ---
+            
+            // Passo A: Buscar o email vinculado ao ID
+            const { data: profiles, error: profileLookupError } = await supabase
+                .from('consultants')
+                .select('email, role')
+                .eq('id', consultantId)
+                .maybeSingle();
+
+            if (profileLookupError) {
+                console.error(profileLookupError);
+                throw new Error('Erro ao verificar ID. Tente novamente.');
+            }
+            
+            if (!profiles) {
+                throw new Error('ID de consultor não encontrado.');
+            }
+
+            // Passo B: Autenticar usando o email encontrado e a senha digitada
             const { data, error: authError } = await supabase.auth.signInWithPassword({
-                email,
+                email: profiles.email,
                 password
             });
 
             if (authError) throw authError;
 
             if (data.user) {
-                // Fetch profile to determine redirect
-                const { data: profile } = await supabase
-                    .from('consultants')
-                    .select('role')
-                    .eq('auth_id', data.user.id)
-                    .single();
-                
-                if (profile?.role === 'admin') {
+                if (profiles.role === 'admin') {
                     navigate('/admin/dashboard');
                 } else {
                     navigate('/consultor/dashboard');
@@ -1043,14 +1097,14 @@ export const LoginScreen = () => {
                     )}
                     
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 ml-1">E-mail</label>
+                        <label className="text-sm font-bold text-gray-700 ml-1">ID do Consultor</label>
                         <input 
-                            type="email" 
+                            type="text" 
                             required
                             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-green-mid focus:ring-2 focus:ring-brand-green-light outline-none transition-all bg-gray-50 focus:bg-white"
-                            placeholder="seu@email.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Ex: 102030"
+                            value={consultantId}
+                            onChange={(e) => setConsultantId(e.target.value)}
                         />
                     </div>
                     
