@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
 import { Consultant } from './types';
 import { 
@@ -15,7 +15,9 @@ import {
     InviteView, 
     BusinessView, 
     FinancialView, 
-    AdminPanelView 
+    AdminPanelView,
+    AdminGoalsView,
+    AdminWithdrawalsView
 } from './ConsultantSystem';
 
 // --- Auth Guard Component ---
@@ -101,7 +103,7 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
 
 export default function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -113,6 +115,8 @@ export default function App() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<OverviewView />} />
             <Route path="administracao" element={<AdminPanelView />} />
+            <Route path="painel-metas" element={<AdminGoalsView />} />
+            <Route path="solicitacoes-saque" element={<AdminWithdrawalsView />} />
             <Route path="materiais" element={<MaterialsView />} />
             <Route path="unibrotos" element={<UniBrotosView />} />
             <Route path="meus-pedidos" element={<MyOrdersView />} />
@@ -138,6 +142,6 @@ export default function App() {
         {/* Catch All */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
