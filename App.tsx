@@ -1,10 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
 import { Consultant } from './types';
 import { 
     LoginScreen, 
+    AdminLoginScreen,
     ConsultantRegister, 
     DashboardShell, 
     OverviewView, 
@@ -18,7 +18,10 @@ import {
     AdminPanelView,
     AdminOverviewView,
     AdminGoalsView,
-    AdminWithdrawalsView
+    AdminWithdrawalsView,
+    AdminReportsView,
+    AdminSupportView,
+    AdminSettingsView
 } from './ConsultantSystem';
 
 // --- Auth Guard Component ---
@@ -69,7 +72,9 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
     }
 
     if (!user) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        // Redirect to appropriate login based on attempted route
+        const target = location.pathname.startsWith('/admin') ? '/portal-master' : '/login';
+        return <Navigate to={target} state={{ from: location }} replace />;
     }
 
     // Role Logic
@@ -110,21 +115,37 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/cadastro" element={<ConsultantRegister />} />
+        
+        {/* SECURE ADMIN LOGIN ROUTE */}
+        <Route path="/portal-master" element={<AdminLoginScreen />} />
 
-        {/* Admin Routes */}
+        {/* Admin Routes (New Structure) */}
         <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route index element={<Navigate to="dashboard" replace />} />
+            
+            {/* GERENCIAMENTO CENTRAL */}
             <Route path="dashboard" element={<AdminOverviewView />} />
-            <Route path="administracao" element={<AdminPanelView />} />
+            <Route path="negocio" element={<BusinessView />} />
+            <Route path="usuarios" element={<AdminPanelView />} />
+            
+            {/* RELATÓRIOS E FINANÇAS */}
+            <Route path="financeiro" element={<FinancialView />} />
+            <Route path="relatorios" element={<AdminReportsView />} />
+            
+            {/* SISTEMA E SUPORTE */}
+            <Route path="suporte" element={<AdminSupportView />} />
+            <Route path="config" element={<AdminSettingsView />} />
+
+            {/* Legacy/Specific Routes kept for specific logic if needed, but removed from sidebar */}
+            <Route path="metas" element={<AdminGoalsView />} />
+            <Route path="saques" element={<AdminWithdrawalsView />} />
+            
+            {/* Operational routes accessible by URL but hidden from menu */}
             <Route path="materiais" element={<MaterialsView />} />
             <Route path="unibrotos" element={<UniBrotosView />} />
             <Route path="meus-pedidos" element={<MyOrdersView />} />
             <Route path="novo-pedido" element={<NewOrderView />} />
-            <Route path="meu-negocio" element={<BusinessView />} />
-            <Route path="financeiro" element={<FinancialView />} />
             <Route path="convidar" element={<InviteView />} />
-            <Route path="metas" element={<AdminGoalsView />} />
-            <Route path="saques" element={<AdminWithdrawalsView />} />
         </Route>
 
         {/* Consultant Routes */}

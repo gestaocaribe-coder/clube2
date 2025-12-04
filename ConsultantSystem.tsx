@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
@@ -43,7 +42,10 @@ import {
     UserCircleIcon,
     TargetIcon,
     HandshakeIcon,
-    BellIcon
+    BellIcon,
+    ChatIcon,
+    ClipboardListIcon,
+    ShieldCheckIcon
 } from './components/Icons';
 import { Consultant, ConsultantStats, Sale, Notification, PrivateCustomer, PrivateSale, Material, Lesson, Order, Withdrawal, GoalMetric } from './types';
 
@@ -63,12 +65,13 @@ const formatCurrency = (value: number) => {
 // Use MOCK_DATA for demo, but fetch real data in production logic
 const MOCK_DATA = {
     team: [
-        { id: '007053', name: 'Cleide Maia', role: 'Consultor', status: 'Ativo', sales: 'R$ 1.250,00', phone: '5511999999999' },
-        { id: '102031', name: 'João Santos', role: 'Consultor', status: 'Ativo', sales: 'R$ 1.200,00', phone: '5511988888888' },
-        { id: '102032', name: 'Ana Costa', role: 'Consultor', status: 'Inativo', sales: 'R$ 0,00', phone: '5511977777777' },
-        { id: '102033', name: 'Pedro Alves', role: 'Líder', status: 'Ativo', sales: 'R$ 3.450,00', phone: '5511966666666' },
-        { id: '102034', name: 'Carla Lima', role: 'Consultor', status: 'Ativo', sales: 'R$ 525,00', phone: '5511955555555' },
-        { id: '102035', name: 'Marcos Rocha', role: 'Consultor', status: 'Inativo', sales: 'R$ 0,00', phone: '5511944444444' },
+        { id: '007053', name: 'Cleide Maia', role: 'Consultor', status: 'Ativo', sales: 'R$ 1.250,00', phone: '5511999999999', email: 'cleide@email.com', address: 'Rua das Flores, 123', city: 'São Paulo', state: 'SP', doc: '123.456.789-00' },
+        { id: '102031', name: 'João Santos', role: 'Consultor', status: 'Ativo', sales: 'R$ 5.200,00', phone: '5511988888888', email: 'joao@email.com', address: 'Av. Brasil, 500', city: 'Rio de Janeiro', state: 'RJ', doc: '222.333.444-55' },
+        { id: '102032', name: 'Ana Costa', role: 'Consultor', status: 'Inativo', sales: 'R$ 0,00', phone: '5511977777777', email: 'ana@email.com', address: 'Rua Projetada, 10', city: 'Salvador', state: 'BA', doc: '999.888.777-66' },
+        { id: '102033', name: 'Pedro Alves', role: 'Líder', status: 'Ativo', sales: 'R$ 3.450,00', phone: '5511966666666', email: 'pedro@email.com', address: 'Rua da Praia, 45', city: 'Recife', state: 'PE', doc: '555.666.777-88' },
+        { id: '102034', name: 'Carla Lima', role: 'Consultor', status: 'Ativo', sales: 'R$ 825,00', phone: '5511955555555', email: 'carla@email.com', address: 'Rua Nova, 88', city: 'Curitiba', state: 'PR', doc: '111.222.333-44' },
+        { id: '102035', name: 'Marcos Rocha', role: 'Consultor', status: 'Inativo', sales: 'R$ 0,00', phone: '5511944444444', email: 'marcos@email.com', address: 'Av. Central, 900', city: 'Porto Alegre', state: 'RS', doc: '444.555.666-99' },
+        { id: '102036', name: 'Julia Roberts', role: 'Líder', status: 'Ativo', sales: 'R$ 8.900,00', phone: '5511933333333', email: 'julia@email.com', address: 'Rua Oscar Freire, 1000', city: 'São Paulo', state: 'SP', doc: '777.888.999-00' },
     ],
     financial: {
         balance: 3450.00,
@@ -168,130 +171,167 @@ const OrderDetailsModal = ({ order, onClose }: { order: Order, onClose: () => vo
     );
 };
 
-// --- NEW COMPONENT: EarningsSimulator (Premium) ---
+const ConsultantDetailsModal = ({ consultant, onClose }: { consultant: any, onClose: () => void }) => {
+    if (!consultant) return null;
 
-const EarningsSimulator = () => {
-    // State for the slider
-    const [monthlyGoal, setMonthlyGoal] = useState<number>(3000);
-    
-    // Constants
-    const PROFIT_PER_UNIT = 17.50;
-    const WORKING_DAYS = 30;
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+            <div className="bg-white rounded-[2rem] w-full max-w-2xl relative z-10 overflow-hidden shadow-2xl flex flex-col">
+                <div className="bg-[#0A382A] px-8 py-6 flex justify-between items-center text-white">
+                    <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 bg-white/10 rounded-full flex items-center justify-center font-bold text-xl border border-white/20">
+                            {consultant.name.charAt(0)}
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-serif font-bold">{consultant.name}</h3>
+                            <p className="text-green-200/70 text-sm">ID: {consultant.id}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="h-8 w-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20">
+                        <CloseIcon className="h-4 w-4" />
+                    </button>
+                </div>
+                <div className="p-8 space-y-6">
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Status</p>
+                            <span className={`px-2 py-1 rounded text-sm font-bold ${consultant.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {consultant.status}
+                            </span>
+                        </div>
+                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Nível</p>
+                            <p className="font-bold text-gray-800">{consultant.role}</p>
+                        </div>
+                    </div>
 
-    // Calculation Logic
-    const unitsPerDay = Math.ceil(monthlyGoal / (PROFIT_PER_UNIT * WORKING_DAYS));
-    const exactMonthlyProfit = unitsPerDay * PROFIT_PER_UNIT * WORKING_DAYS;
+                    <div className="space-y-4">
+                        <h4 className="text-sm font-bold text-brand-green-dark uppercase tracking-widest border-b border-gray-100 pb-2">Dados de Contato</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                <p className="text-xs text-gray-400">E-mail</p>
+                                <p className="font-medium text-gray-800">{consultant.email}</p>
+                            </div>
+                             <div>
+                                <p className="text-xs text-gray-400">Telefone / WhatsApp</p>
+                                <p className="font-medium text-gray-800">{consultant.phone}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h4 className="text-sm font-bold text-brand-green-dark uppercase tracking-widest border-b border-gray-100 pb-2">Documentação & Endereço</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                <p className="text-xs text-gray-400">CPF/CNPJ</p>
+                                <p className="font-medium text-gray-800">{consultant.doc || 'Não informado'}</p>
+                            </div>
+                             <div>
+                                <p className="text-xs text-gray-400">Endereço</p>
+                                <p className="font-medium text-gray-800">{consultant.address || 'Não informado'}</p>
+                                <p className="text-sm text-gray-600">{consultant.city} - {consultant.state}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div className="pt-4 flex gap-4">
+                        <button className="flex-1 py-3 bg-brand-green-mid text-white rounded-xl font-bold shadow hover:bg-brand-green-dark transition">
+                            Enviar Mensagem
+                        </button>
+                        <button className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition">
+                            Editar Cadastro
+                        </button>
+                     </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- NEW COMPONENT: ConsultantRanking (Replaces Simulator in Admin) ---
+
+const ConsultantRanking = () => {
+    // Parse currency string to number for sorting
+    const parseValue = (str: string) => parseFloat(str.replace('R$ ', '').replace('.', '').replace(',', '.'));
     
-    // Format helper
-    const fmt = (val: number) => val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // Sort team by sales descending
+    const rankedTeam = [...MOCK_DATA.team].sort((a, b) => parseValue(b.sales) - parseValue(a.sales));
+    const top3 = rankedTeam.slice(0, 3);
+    const rest = rankedTeam.slice(3);
 
     return (
         <div className="bg-[#0A382A] rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-green-900/30">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 border-b border-white/10 pb-8 relative z-10">
-                <div className="flex items-center gap-4">
-                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10 shadow-inner">
-                        <CalculatorIcon className="h-8 w-8 text-[#4CAF50]" />
-                     </div>
-                     <div>
-                         <h3 className="text-2xl md:text-3xl font-serif font-bold tracking-tight">Simulador de Ganhos</h3>
-                         <p className="text-green-100/60 text-sm mt-1">Planeje seu futuro. Defina sua meta.</p>
-                     </div>
+            <div className="flex items-center gap-4 mb-8 border-b border-white/10 pb-6 relative z-10">
+                 <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10 shadow-inner">
+                    <SparklesIcon className="h-8 w-8 text-[#FFD700]" />
+                 </div>
+                 <div>
+                     <h3 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-white">Ranking de Consultores</h3>
+                     <p className="text-green-100/60 text-sm mt-1">Os maiores destaques da sua rede neste mês.</p>
+                 </div>
+            </div>
+
+            {/* TOP 3 PODIUM */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-10">
+                {/* 2nd Place */}
+                <div className="order-2 md:order-1 bg-gradient-to-b from-gray-300/10 to-transparent border border-gray-400/20 rounded-2xl p-6 flex flex-col items-center justify-end text-center transform md:translate-y-4">
+                    <div className="w-16 h-16 rounded-full border-4 border-gray-300 bg-gray-800 flex items-center justify-center font-bold text-xl text-gray-300 mb-3 shadow-lg">
+                        {top3[1]?.name.charAt(0)}
+                    </div>
+                    <div className="text-gray-300 font-bold text-lg mb-1">{top3[1]?.name}</div>
+                    <div className="text-sm text-gray-400 mb-2">{top3[1]?.role}</div>
+                    <div className="px-4 py-1 bg-gray-300/20 rounded-full text-gray-200 font-bold text-sm">
+                        {top3[1]?.sales}
+                    </div>
+                    <div className="mt-4 text-4xl font-black text-gray-500/20">2º</div>
                 </div>
-                <div className="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-xs font-bold uppercase tracking-wider text-green-200/80">
-                    Lucro Unitário: R$ {fmt(PROFIT_PER_UNIT)}
+
+                {/* 1st Place */}
+                <div className="order-1 md:order-2 bg-gradient-to-b from-yellow-500/20 to-transparent border border-yellow-500/30 rounded-2xl p-6 flex flex-col items-center text-center shadow-[0_0_30px_rgba(255,215,0,0.1)] transform md:-translate-y-4">
+                     <div className="absolute -top-6">
+                        <SparklesIcon className="h-12 w-12 text-yellow-400 animate-bounce" />
+                     </div>
+                    <div className="w-20 h-20 rounded-full border-4 border-yellow-400 bg-gray-800 flex items-center justify-center font-bold text-2xl text-yellow-400 mb-3 shadow-xl">
+                        {top3[0]?.name.charAt(0)}
+                    </div>
+                    <div className="text-yellow-100 font-bold text-xl mb-1">{top3[0]?.name}</div>
+                    <div className="text-sm text-yellow-200/60 mb-2">{top3[0]?.role}</div>
+                    <div className="px-5 py-2 bg-yellow-500/20 rounded-full text-yellow-300 font-bold text-lg border border-yellow-500/20">
+                        {top3[0]?.sales}
+                    </div>
+                    <div className="mt-4 text-5xl font-black text-yellow-500/20">1º</div>
+                </div>
+
+                {/* 3rd Place */}
+                <div className="order-3 bg-gradient-to-b from-orange-700/10 to-transparent border border-orange-700/20 rounded-2xl p-6 flex flex-col items-center justify-end text-center transform md:translate-y-8">
+                    <div className="w-16 h-16 rounded-full border-4 border-orange-600 bg-gray-800 flex items-center justify-center font-bold text-xl text-orange-600 mb-3 shadow-lg">
+                        {top3[2]?.name.charAt(0)}
+                    </div>
+                    <div className="text-orange-100 font-bold text-lg mb-1">{top3[2]?.name}</div>
+                    <div className="text-sm text-orange-200/60 mb-2">{top3[2]?.role}</div>
+                    <div className="px-4 py-1 bg-orange-600/20 rounded-full text-orange-300 font-bold text-sm">
+                        {top3[2]?.sales}
+                    </div>
+                     <div className="mt-4 text-4xl font-black text-orange-700/20">3º</div>
                 </div>
             </div>
 
-            {/* Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
-                
-                {/* Left: Quick Scenarios (Cards) */}
-                <div className="lg:col-span-4 flex flex-col gap-4">
-                    <p className="text-xs font-bold uppercase tracking-widest text-green-200/50 mb-2 pl-1">Cenários Rápidos</p>
-                    {[2, 5, 10].map((units) => {
-                        const profit = units * PROFIT_PER_UNIT * WORKING_DAYS;
-                        const isHigh = units === 10;
-                        return (
-                            <div 
-                                key={units}
-                                onClick={() => setMonthlyGoal(profit)}
-                                className={`cursor-pointer group relative p-5 rounded-2xl border transition-all duration-300 ${
-                                    isHigh 
-                                    ? 'bg-gradient-to-r from-[#144d3b] to-[#0A382A] border-[#4CAF50]/50 shadow-lg' 
-                                    : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
-                                }`}
-                            >
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isHigh ? 'bg-[#4CAF50] text-white' : 'bg-white/10 text-gray-300'}`}>
-                                            {units}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-white">Vender {units} un/dia</p>
-                                            <p className="text-xs text-green-200/60">Meta alcançável</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className={`text-lg font-bold ${isHigh ? 'text-[#4CAF50]' : 'text-white'}`}>R$ {fmt(profit)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Right: Interactive Slider & Main Result */}
-                <div className="lg:col-span-8 bg-white/5 backdrop-blur-md rounded-[2rem] border border-white/5 p-8 flex flex-col justify-between relative overflow-hidden">
-                    {/* Background Glow */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#4CAF50] opacity-10 blur-[80px] rounded-full pointer-events-none"></div>
-
-                    <div className="relative z-10 text-center mb-8">
-                        <p className="text-green-200/70 font-medium mb-2">Quanto você quer ganhar este mês?</p>
-                        <div className="flex items-baseline justify-center gap-2">
-                             <span className="text-2xl text-green-200/50 font-serif">R$</span>
-                             <span className="text-6xl md:text-7xl font-bold text-white tracking-tighter transition-all duration-200">
-                                 {fmt(monthlyGoal)}
-                             </span>
-                        </div>
-                    </div>
-
-                    {/* Slider Component */}
-                    <div className="relative z-10 w-full px-4 mb-8">
-                        <input 
-                            type="range" 
-                            min="500" 
-                            max="10000" 
-                            step="100"
-                            value={monthlyGoal}
-                            onChange={(e) => setMonthlyGoal(Number(e.target.value))}
-                            className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#4CAF50] hover:accent-green-400 transition-all"
-                            style={{
-                                background: `linear-gradient(to right, #4CAF50 0%, #4CAF50 ${(monthlyGoal - 500) / (10000 - 500) * 100}%, #1f2937 ${(monthlyGoal - 500) / (10000 - 500) * 100}%, #1f2937 100%)`
-                            }}
-                        />
-                        <div className="flex justify-between mt-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            <span>R$ 500</span>
-                            <span>R$ 10.000+</span>
-                        </div>
-                    </div>
-
-                    {/* Result Badge */}
-                    <div className="relative z-10 bg-[#0A382A] rounded-2xl p-6 border border-[#4CAF50]/30 flex items-center justify-between shadow-xl">
+            {/* List for the rest */}
+            <div className="bg-white/5 rounded-2xl p-4 border border-white/5 relative z-10 max-h-64 overflow-y-auto custom-scrollbar">
+                {rest.map((consultant, index) => (
+                    <div key={consultant.id} className="flex items-center justify-between p-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition rounded-lg">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-[#4CAF50] text-white rounded-xl shadow-lg shadow-green-500/20 animate-pulse">
-                                <TargetIcon className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <p className="text-[#4CAF50] text-xs font-bold uppercase tracking-widest mb-1">Sua Meta Diária</p>
-                                <p className="text-white font-medium text-sm">Para atingir esse ganho, você precisa:</p>
+                            <span className="text-white/30 font-bold w-6">{index + 4}º</span>
+                            <div className="flex flex-col">
+                                <span className="font-bold text-white text-sm">{consultant.name}</span>
+                                <span className="text-xs text-white/50">ID: {consultant.id}</span>
                             </div>
                         </div>
-                        <div className="text-right">
-                             <span className="block text-3xl font-bold text-white">~{unitsPerDay} <span className="text-lg text-gray-400 font-normal">un/dia</span></span>
-                        </div>
+                        <span className="font-mono font-bold text-green-400 text-sm">{consultant.sales}</span>
                     </div>
-                </div>
+                ))}
             </div>
         </div>
     );
@@ -325,11 +365,11 @@ export const OverviewView = () => {
                         Sua jornada de sucesso continua. Você já impactou vidas hoje?
                     </p>
                     <div className="mt-8 flex gap-4">
-                        <Link to={consultant.role === 'admin' ? "/admin/novo-pedido" : "/consultor/novo-pedido"} className="px-6 py-3 bg-white text-brand-green-dark rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center gap-2">
+                        <Link to="/consultor/novo-pedido" className="px-6 py-3 bg-white text-brand-green-dark rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center gap-2">
                             <ShoppingCartIcon className="h-5 w-5" />
                             Novo Pedido
                         </Link>
-                         <Link to={consultant.role === 'admin' ? "/admin/materiais" : "/consultor/materiais"} className="px-6 py-3 bg-brand-green-dark bg-opacity-30 border border-white/20 backdrop-blur-sm text-white rounded-xl font-bold hover:bg-opacity-40 transition-all flex items-center gap-2">
+                         <Link to="/consultor/materiais" className="px-6 py-3 bg-brand-green-dark bg-opacity-30 border border-white/20 backdrop-blur-sm text-white rounded-xl font-bold hover:bg-opacity-40 transition-all flex items-center gap-2">
                             <SparklesIcon className="h-5 w-5" />
                             Divulgar
                         </Link>
@@ -398,7 +438,8 @@ export const AdminOverviewView = () => {
             {/* Header Date Info */}
             <div className="flex justify-between items-center px-2">
                 <div>
-                     <h2 className="text-2xl md:text-3xl font-serif font-bold text-[#0A382A]">Olá, Administrador! 👋</h2>
+                     <h2 className="text-2xl md:text-3xl font-serif font-bold text-[#0A382A]">Dashboard Gerencial 📊</h2>
+                     <p className="text-gray-500 text-sm">Visão global e estratégica da rede.</p>
                 </div>
                 <span className="text-gray-400 text-sm italic hidden md:block">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
             </div>
@@ -413,32 +454,32 @@ export const AdminOverviewView = () => {
                     
                     <div className="relative z-10">
                         <div className="inline-block bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 mb-6">
-                            <span className="text-xs font-bold uppercase tracking-widest text-green-100">Modelo de Negócio</span>
+                            <span className="text-xs font-bold uppercase tracking-widest text-green-100">Rede Global</span>
                         </div>
                         
                         <h1 className="text-4xl md:text-5xl font-serif font-bold leading-tight mb-6 text-white">
-                            Faça seu negócio <br/>
-                            <span className="text-[#4CAF50]">do seu jeito</span>
+                            Monitore o <br/>
+                            <span className="text-[#4CAF50]">Crescimento</span>
                         </h1>
                         
                         <p className="text-green-50/70 text-lg font-light max-w-lg mb-10 leading-relaxed">
-                            Liberdade total. Escolha entre lucro rápido com vendas diretas ou construa um legado duradouro formando sua própria equipe.
+                            Acompanhe em tempo real o desempenho de todos os consultores, novas adesões e volume de vendas.
                         </p>
 
                         <div className="flex flex-wrap gap-4">
-                            <Link to="/admin/novo-pedido" className="flex-1 md:flex-none px-6 py-4 bg-white text-[#0A382A] rounded-2xl font-bold shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all flex items-center justify-center gap-3 min-w-[200px] group">
-                                <ShoppingCartIcon className="h-6 w-6 group-hover:scale-110 transition-transform" />
+                            <Link to="/admin/usuarios" className="flex-1 md:flex-none px-6 py-4 bg-white text-[#0A382A] rounded-2xl font-bold shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all flex items-center justify-center gap-3 min-w-[200px] group">
+                                <UsersIcon className="h-6 w-6 group-hover:scale-110 transition-transform" />
                                 <div className="text-left">
-                                    <span className="block text-[10px] uppercase text-gray-500 font-extrabold tracking-wider">Foco em</span>
-                                    <span className="text-lg">Venda Direta</span>
+                                    <span className="block text-[10px] uppercase text-gray-500 font-extrabold tracking-wider">Consultores</span>
+                                    <span className="text-lg">Gerenciar</span>
                                 </div>
                             </Link>
                             
-                            <Link to="/admin/convidar" className="flex-1 md:flex-none px-6 py-4 bg-[#144d3b] text-white border border-white/5 rounded-2xl font-bold hover:bg-[#1a5e48] transition-all flex items-center justify-center gap-3 min-w-[200px]">
-                                <UsersIcon className="h-6 w-6 text-[#4CAF50]" />
+                            <Link to="/admin/financeiro" className="flex-1 md:flex-none px-6 py-4 bg-[#144d3b] text-white border border-white/5 rounded-2xl font-bold hover:bg-[#1a5e48] transition-all flex items-center justify-center gap-3 min-w-[200px]">
+                                <BanknotesIcon className="h-6 w-6 text-[#4CAF50]" />
                                 <div className="text-left">
-                                    <span className="block text-[10px] uppercase text-gray-400 font-extrabold tracking-wider">Foco em</span>
-                                    <span className="text-lg">Construção de Time</span>
+                                    <span className="block text-[10px] uppercase text-gray-400 font-extrabold tracking-wider">Acessar</span>
+                                    <span className="text-lg">Financeiro</span>
                                 </div>
                             </Link>
                         </div>
@@ -447,793 +488,142 @@ export const AdminOverviewView = () => {
 
                 {/* Right: Info Card (Dark #1C2833) */}
                 <div className="w-full xl:w-96 bg-[#1C2833] rounded-[2.5rem] p-8 text-white flex flex-col shadow-lg shadow-gray-900/20">
-                    {/* Tabs */}
-                    <div className="bg-[#0f172a] p-1.5 rounded-xl flex mb-8 border border-white/5">
-                        <button 
-                            onClick={() => setTab('revenda')}
-                            className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${tab === 'revenda' ? 'bg-white text-[#1C2833] shadow' : 'text-gray-500 hover:text-white'}`}
-                        >
-                            Revenda
-                        </button>
-                        <button 
-                            onClick={() => setTab('lideranca')}
-                            className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${tab === 'lideranca' ? 'bg-white text-[#1C2833] shadow' : 'text-gray-500 hover:text-white'}`}
-                        >
-                            Liderança
-                        </button>
-                    </div>
-
-                    <div className="flex-1 flex flex-col justify-center animate-fade-in relative">
-                        {/* Decorative Icon BG */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/[0.02] pointer-events-none">
-                            {tab === 'revenda' ? <TagIcon className="h-48 w-48" /> : <BriefcaseIcon className="h-48 w-48" />}
-                        </div>
-
-                        {tab === 'revenda' ? (
-                            <div className="space-y-8 relative z-10">
-                                <div>
-                                    <div className="w-14 h-14 bg-[#4CAF50]/10 rounded-2xl flex items-center justify-center text-[#4CAF50] mb-4 border border-[#4CAF50]/20">
-                                        <TagIcon className="h-7 w-7" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold mb-2 text-white">Lucro de 100%</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
-                                        Margem excepcional. Compre por <span className="text-white font-bold">R$ 17,50</span> e revenda por <span className="text-white font-bold">R$ 35,00</span>.
-                                    </p>
-                                </div>
-                                <div>
-                                    <div className="w-14 h-14 bg-[#4CAF50]/10 rounded-2xl flex items-center justify-center text-[#4CAF50] mb-4 border border-[#4CAF50]/20">
-                                        <TruckIcon className="h-7 w-7" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold mb-2 text-white">Pronta Entrega</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
-                                        Receba produtos em casa e atenda seus clientes com agilidade e confiança.
-                                    </p>
-                                </div>
+                    <h3 className="text-xl font-bold mb-6 text-white">Resumo da Rede</h3>
+                    
+                    <div className="space-y-6 flex-1 flex flex-col justify-center">
+                        <Link to="/admin/usuarios" className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-4 hover:bg-white/10 transition cursor-pointer group">
+                            <div className="p-3 bg-green-500/20 text-green-400 rounded-xl group-hover:scale-110 transition-transform">
+                                <UserPlusIcon className="h-6 w-6" />
                             </div>
-                        ) : (
-                            <div className="space-y-8 relative z-10">
-                                <div>
-                                    <div className="w-14 h-14 bg-[#9c27b0]/10 rounded-2xl flex items-center justify-center text-[#9c27b0] mb-4 border border-[#9c27b0]/20">
-                                        <TrendingUpIcon className="h-7 w-7" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold mb-2 text-white">Escalabilidade</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
-                                        Ganhe sobre o volume de vendas de toda a sua rede de indicados diretos e indiretos.
-                                    </p>
-                                </div>
-                                <div>
-                                    <div className="w-14 h-14 bg-[#9c27b0]/10 rounded-2xl flex items-center justify-center text-[#9c27b0] mb-4 border border-[#9c27b0]/20">
-                                        <BriefcaseIcon className="h-7 w-7" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold mb-2 text-white">Mentoria</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
-                                        Treine seu time e receba bônus exclusivos por formação de novos líderes.
-                                    </p>
-                                </div>
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase font-bold">Novos (30d)</p>
+                                <p className="text-2xl font-bold text-white">14</p>
                             </div>
-                        )}
-                    </div>
-                </div>
-            </div>
+                        </Link>
 
-            {/* Bottom: Simulator (Premium Component) */}
-            <EarningsSimulator />
-        </div>
-    );
-};
-
-export const AdminGoalsView = () => {
-    // Mock data for demo - in production replace with supabase fetch
-    const teamMetrics: GoalMetric[] = MOCK_DATA.team.map(member => {
-        const sales = parseFloat(member.sales.replace('R$ ', '').replace('.', '').replace(',', '.'));
-        const goal = 5000;
-        return {
-            consultant_id: member.id,
-            name: member.name,
-            total_sales: sales,
-            goal: goal,
-            percentage: (sales / goal) * 100
-        };
-    }).sort((a, b) => b.total_sales - a.total_sales);
-
-    const totalBonus = teamMetrics
-        .filter(m => m.percentage >= 100)
-        .reduce((acc, curr) => acc + (curr.total_sales * 0.1), 0); // 10% bonus for goal met
-
-    return (
-        <div className="space-y-8 animate-fade-in">
-            <div className="bg-[#0A382A] rounded-[2rem] p-8 md:p-12 text-white relative overflow-hidden shadow-lg">
-                <div className="relative z-10">
-                     <h2 className="text-3xl font-serif font-bold mb-2">Painel de Metas</h2>
-                     <p className="text-green-200/70">Acompanhe o desempenho e bonificações da equipe.</p>
-                     
-                     <div className="mt-8 p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 inline-block min-w-[300px]">
-                         <p className="text-xs font-bold uppercase tracking-widest text-green-300 mb-1">Bonificação Acumulada (Est.)</p>
-                         <h3 className="text-4xl font-bold text-white">{formatCurrency(totalBonus)}</h3>
-                     </div>
-                </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="p-4 text-sm font-bold text-gray-500">Consultor</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Vendas / Meta</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Progresso</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {teamMetrics.map((metric) => (
-                            <tr key={metric.consultant_id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                                <td className="p-4">
-                                    <div className="font-bold text-gray-800">{metric.name}</div>
-                                    <div className="text-xs text-gray-400">ID: {metric.consultant_id}</div>
-                                </td>
-                                <td className="p-4 text-sm">
-                                    <span className="font-bold text-gray-700">{formatCurrency(metric.total_sales)}</span>
-                                    <span className="text-gray-400"> / {formatCurrency(metric.goal)}</span>
-                                </td>
-                                <td className="p-4 w-1/3">
-                                    <div className="w-full bg-gray-100 rounded-full h-2.5">
-                                        <div 
-                                            className={`h-2.5 rounded-full ${
-                                                metric.percentage >= 100 ? 'bg-green-500' : 
-                                                metric.percentage >= 80 ? 'bg-yellow-400' : 'bg-gray-300'
-                                            }`} 
-                                            style={{ width: `${Math.min(metric.percentage, 100)}%` }}
-                                        ></div>
-                                    </div>
-                                    <div className="text-right text-xs font-bold text-gray-500 mt-1">{metric.percentage.toFixed(0)}%</div>
-                                </td>
-                                <td className="p-4">
-                                    {metric.percentage >= 100 ? (
-                                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200">
-                                            Meta Batida
-                                        </span>
-                                    ) : metric.percentage >= 80 ? (
-                                        <span className="px-3 py-1 bg-yellow-50 text-yellow-700 rounded-full text-xs font-bold border border-yellow-100">
-                                            Quase lá
-                                        </span>
-                                    ) : (
-                                        <span className="text-gray-400 text-xs font-bold">Em andamento</span>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-};
-
-export const AdminWithdrawalsView = () => {
-    const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-    const [loading, setLoading] = useState(false);
-
-    // Mock data fetching
-    useEffect(() => {
-        // In production: supabase.from('withdrawals').select('*')...
-        setWithdrawals([
-            { id: '1', consultant_id: '007053', amount: 350.00, status: 'pending', created_at: '2023-11-01' },
-            { id: '2', consultant_id: '102031', amount: 1200.00, status: 'approved', processed_at: '2023-10-28', created_at: '2023-10-25' },
-        ]);
-    }, []);
-
-    const handleAction = async (id: string, action: 'approve' | 'reject') => {
-        setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            setWithdrawals(prev => prev.map(w => w.id === id ? { ...w, status: action === 'approve' ? 'approved' : 'rejected' } : w));
-            setLoading(false);
-        }, 500);
-    };
-
-    return (
-        <div className="space-y-8 animate-fade-in">
-             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-serif font-bold text-gray-800">Solicitações de Saque</h2>
-                <div className="flex gap-2">
-                    <button className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-600 shadow-sm">Exportar CSV</button>
-                </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="p-4 text-sm font-bold text-gray-500">ID Solicitante</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Valor</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Data</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Status</th>
-                            <th className="p-4 text-sm font-bold text-gray-500 text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                         {withdrawals.length === 0 ? (
-                            <tr><td colSpan={5} className="p-8 text-center text-gray-500">Nenhuma solicitação pendente.</td></tr>
-                        ) : (
-                            withdrawals.map((item) => (
-                                <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                                    <td className="p-4 text-gray-900 font-medium">{item.consultant_id}</td>
-                                    <td className="p-4 font-bold text-brand-green-dark">{formatCurrency(item.amount)}</td>
-                                    <td className="p-4 text-gray-500 text-sm">{new Date(item.created_at).toLocaleDateString()}</td>
-                                    <td className="p-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                                            item.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                            item.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                            'bg-yellow-100 text-yellow-700'
-                                        }`}>
-                                            {item.status === 'pending' ? 'Aguardando' : item.status === 'approved' ? 'Aprovado' : 'Rejeitado'}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        {item.status === 'pending' && (
-                                            <div className="flex justify-end gap-2">
-                                                <button 
-                                                    onClick={() => handleAction(item.id, 'approve')}
-                                                    disabled={loading}
-                                                    className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition"
-                                                >
-                                                    Aprovar
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleAction(item.id, 'reject')}
-                                                    disabled={loading}
-                                                    className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 rounded-lg text-xs font-bold hover:bg-red-100 transition"
-                                                >
-                                                    Rejeitar
-                                                </button>
-                                            </div>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-};
-
-export const MaterialsView = () => {
-    const { consultant } = useOutletContext<DashboardContextType>();
-    const [materials, setMaterials] = useState<Material[]>([]);
-
-    useEffect(() => {
-        const fetchMaterials = async () => {
-             const { data } = await supabase.from('materials').select('*').order('created_at', { ascending: false });
-             if (data) setMaterials(data);
-        };
-        fetchMaterials();
-    }, []);
-
-    const isAdmin = consultant.role === 'admin';
-
-    return (
-        <div className="space-y-8 animate-fade-in">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-2xl font-serif font-bold text-gray-800">Materiais de Marketing</h2>
-                    <p className="text-gray-500">Baixe conteúdos profissionais para suas redes sociais.</p>
-                </div>
-                {isAdmin && (
-                    <button className="px-4 py-2 bg-brand-green-dark text-white rounded-lg shadow hover:bg-opacity-90 transition text-sm font-bold flex items-center gap-2">
-                        <PlusIcon className="h-4 w-4" /> Novo Material
-                    </button>
-                )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {materials.map((item) => (
-                    <div key={item.id} className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
-                        <div className="h-48 bg-gray-100 relative overflow-hidden">
-                            {item.type === 'image' ? (
-                                <img src={item.url || 'https://via.placeholder.com/400'} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-brand-green-light">
-                                    <ClipboardCopyIcon className="h-16 w-16 text-brand-green-mid opacity-50" />
-                                </div>
-                            )}
-                            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-gray-600 shadow-sm">
-                                {item.category}
+                         <Link to="/admin/usuarios" className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-4 hover:bg-white/10 transition cursor-pointer group">
+                            <div className="p-3 bg-blue-500/20 text-blue-400 rounded-xl group-hover:scale-110 transition-transform">
+                                <CheckCircleIcon className="h-6 w-6" />
                             </div>
-                        </div>
-                        <div className="p-6">
-                            <h3 className="font-bold text-gray-800 text-lg mb-2 line-clamp-1">{item.title}</h3>
-                            <div className="flex gap-3 mt-4">
-                                <button className="flex-1 py-2 rounded-lg bg-gray-50 text-gray-600 text-sm font-bold hover:bg-gray-100 transition-colors flex items-center justify-center gap-2">
-                                    <EyeIcon className="h-4 w-4" /> Visualizar
-                                </button>
-                                <button className="flex-1 py-2 rounded-lg bg-brand-green-mid text-white text-sm font-bold hover:bg-brand-green-dark transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-100">
-                                    <DownloadIcon className="h-4 w-4" /> Baixar
-                                </button>
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase font-bold">Ativos</p>
+                                <p className="text-2xl font-bold text-white">87</p>
                             </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
+                        </Link>
 
-export const UniBrotosView = () => {
-    const { consultant } = useOutletContext<DashboardContextType>();
-    const [lessons, setLessons] = useState<Lesson[]>([]);
-
-    useEffect(() => {
-        const fetchLessons = async () => {
-             const { data } = await supabase.from('lessons').select('*').order('created_at', { ascending: false });
-             if (data) setLessons(data);
-        };
-        fetchLessons();
-    }, []);
-
-    const isAdmin = consultant.role === 'admin';
-
-    return (
-         <div className="space-y-8 animate-fade-in">
-             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-brand-dark-bg text-white p-8 rounded-[2rem] relative overflow-hidden">
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-2">
-                        <AcademicCapIcon className="h-8 w-8 text-brand-green-mid" />
-                        <h2 className="text-3xl font-serif font-bold">UniBrotos</h2>
-                    </div>
-                    <p className="text-gray-300 max-w-lg">Sua universidade corporativa. Aprenda sobre produtos, técnicas de venda e liderança.</p>
-                </div>
-                {isAdmin && (
-                    <button className="relative z-10 px-4 py-2 bg-brand-green-mid text-white rounded-lg shadow hover:bg-brand-green-dark transition text-sm font-bold flex items-center gap-2">
-                        <PlusIcon className="h-4 w-4" /> Adicionar Aula
-                    </button>
-                )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {lessons.map((lesson) => (
-                    <div key={lesson.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
-                        <div className={`h-48 ${lesson.thumbnail || 'bg-gray-200'} relative flex items-center justify-center`}>
-                            <PlayCircleIcon className="text-white/80 group-hover:scale-110 transition-transform duration-300 drop-shadow-lg h-16 w-16" />
-                            <span className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded font-medium">
-                                {lesson.duration}
-                            </span>
-                        </div>
-                        <div className="p-5">
-                            <span className="text-xs font-bold text-brand-green-mid uppercase tracking-wider">{lesson.category}</span>
-                            <h3 className="font-bold text-gray-800 text-lg mt-1 mb-2 group-hover:text-brand-green-dark transition-colors">{lesson.title}</h3>
-                        </div>
-                    </div>
-                ))}
-            </div>
-         </div>
-    );
-};
-
-export const MyOrdersView = () => {
-    const { consultant } = useOutletContext<DashboardContextType>();
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
-    useEffect(() => {
-        const fetchOrders = async () => {
-            const { data } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('consultant_id', consultant.id)
-                .order('created_at', { ascending: false });
-            if (data) setOrders(data);
-        };
-        fetchOrders();
-    }, [consultant.id]);
-
-    return (
-        <div className="space-y-8 animate-fade-in">
-            <h2 className="text-2xl font-serif font-bold text-gray-800">Meus Pedidos</h2>
-            
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th className="p-4 text-sm font-bold text-gray-500">ID</th>
-                                <th className="p-4 text-sm font-bold text-gray-500">Data</th>
-                                <th className="p-4 text-sm font-bold text-gray-500">Total</th>
-                                <th className="p-4 text-sm font-bold text-gray-500">Status</th>
-                                <th className="p-4 text-sm font-bold text-gray-500">Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orders.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="p-8 text-center text-gray-500">
-                                        Nenhum pedido encontrado.
-                                    </td>
-                                </tr>
-                            ) : (
-                                orders.map((order) => (
-                                    <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                                        <td className="p-4 font-medium text-gray-900">#{order.id}</td>
-                                        <td className="p-4 text-gray-600">{order.date}</td>
-                                        <td className="p-4 font-bold text-gray-800">{order.total}</td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                                order.status === 'Entregue' ? 'bg-green-100 text-green-700' :
-                                                order.status === 'Em trânsito' ? 'bg-blue-100 text-blue-700' :
-                                                'bg-yellow-100 text-yellow-700'
-                                            }`}>
-                                                {order.status}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <button 
-                                                onClick={() => setSelectedOrder(order)}
-                                                className="text-brand-green-mid hover:text-brand-green-dark font-bold text-sm"
-                                            >
-                                                Ver Detalhes
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {selectedOrder && <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />}
-        </div>
-    );
-};
-
-export const NewOrderView = () => {
-    const { consultant } = useOutletContext<DashboardContextType>();
-    const [quantity, setQuantity] = useState(1);
-    const [zipCode, setZipCode] = useState('');
-    const [shippingCost, setShippingCost] = useState<number | null>(null);
-    const [loadingShipping, setLoadingShipping] = useState(false);
-
-    const pricePerUnit = 210.00;
-    const subtotal = quantity * pricePerUnit;
-
-    const handleCalculateShipping = () => {
-        if (zipCode.length < 8) return;
-        setLoadingShipping(true);
-        setTimeout(() => {
-            if (subtotal >= 400) {
-                setShippingCost(0);
-            } else {
-                setShippingCost(45.90);
-            }
-            setLoadingShipping(false);
-        }, 1000);
-    };
-
-    const handleFinalizeOrder = async () => {
-        const orderId = `PED-${Math.floor(Math.random() * 10000)}`;
-        const totalValue = formatCurrency(subtotal + (shippingCost || 0));
-        
-        // Abrir WhatsApp imediatamente (Fire and Forget)
-        const message = `Olá! Sou o consultor ${consultant.name.split(' ')[0]} (ID: ${consultant.id}). Gostaria de finalizar o pedido *${orderId}*.\n\nItens: ${quantity}x Display Canela de Velho\nTotal: ${totalValue}`;
-        const whatsappUrl = `https://wa.me/557199190515?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
-        
-        // Tentar salvar no banco em segundo plano
-        try {
-            await supabase.from('orders').insert({
-                id: orderId,
-                consultant_id: consultant.id,
-                date: new Date().toLocaleDateString('pt-BR'),
-                items: `${quantity}x Display Canela de Velho`,
-                total: totalValue,
-                status: 'Pendente'
-            });
-        } catch (err) {
-            console.error("Background save failed", err);
-        }
-    };
-
-    return (
-        <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
-             <div className="text-center mb-8">
-                <h2 className="text-3xl font-serif font-bold text-brand-green-dark mb-2">Novo Pedido</h2>
-                <p className="text-gray-500">Abasteça seu estoque e garanta 100% de lucro.</p>
-            </div>
-
-            <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100">
-                <div className="p-8">
-                    {/* Product Card */}
-                    <div className="flex flex-col md:flex-row gap-6 items-center mb-8">
-                        <div className="w-32 h-32 bg-gray-50 rounded-2xl p-4 border border-gray-100">
-                            <img src="https://i.imgur.com/yNKoBxr.png" alt="Produto" className="w-full h-full object-contain" />
-                        </div>
-                        <div className="flex-1 text-center md:text-left">
-                            <h3 className="text-xl font-bold text-gray-800">Display Pomada Canela de Velho</h3>
-                            <p className="text-gray-500 mb-2">Contém 12 unidades de 100g</p>
-                            <div className="inline-block bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-bold border border-green-100">
-                                Preço de Custo: R$ 17,50 /un
+                         <Link to="/admin/financeiro" className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-4 hover:bg-white/10 transition cursor-pointer group">
+                            <div className="p-3 bg-yellow-500/20 text-yellow-400 rounded-xl group-hover:scale-110 transition-transform">
+                                <ShoppingCartIcon className="h-6 w-6" />
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Quantity Control */}
-                    <div className="bg-gray-50 rounded-2xl p-6 mb-8">
-                        <label className="block text-sm font-bold text-gray-500 mb-4 uppercase tracking-wide text-center">Quantidade de Displays</label>
-                        <div className="flex items-center justify-center gap-6">
-                            <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="h-12 w-12 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition shadow-sm">
-                                <MinusIcon className="h-5 w-5 text-gray-600" />
-                            </button>
-                            <span className="text-4xl font-bold text-brand-green-dark w-16 text-center">{quantity}</span>
-                            <button onClick={() => setQuantity(q => q + 1)} className="h-12 w-12 rounded-full bg-brand-green-dark text-white flex items-center justify-center hover:bg-opacity-90 transition shadow-lg shadow-green-200">
-                                <PlusIcon className="h-5 w-5" />
-                            </button>
-                        </div>
-                        <p className="text-center text-gray-400 mt-4 text-sm">Total de {quantity * 12} pomadas</p>
-                    </div>
-
-                    {/* Shipping Calc */}
-                    <div className="mb-8">
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Calcular Frete</label>
-                        <div className="flex gap-2">
-                            <input 
-                                type="text" 
-                                placeholder="CEP (00000-000)" 
-                                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-green-mid"
-                                value={zipCode}
-                                onChange={(e) => setZipCode(e.target.value)}
-                            />
-                            <button 
-                                onClick={handleCalculateShipping}
-                                className="bg-gray-800 text-white px-6 rounded-xl font-bold hover:bg-gray-900 transition"
-                                disabled={loadingShipping}
-                            >
-                                {loadingShipping ? '...' : 'Calcular'}
-                            </button>
-                        </div>
-                        {shippingCost !== null && (
-                            <div className={`mt-4 p-4 rounded-xl flex items-center gap-3 ${shippingCost === 0 ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-gray-50 text-gray-700 border border-gray-100'}`}>
-                                <TruckIcon className="h-5 w-5" />
-                                <div className="flex-1 font-medium">
-                                    {shippingCost === 0 ? 'Frete Grátis' : 'Envio via Transportadora'}
-                                </div>
-                                <div className="font-bold">
-                                    {shippingCost === 0 ? 'Grátis' : formatCurrency(shippingCost)}
-                                </div>
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase font-bold">Pedidos (Hoje)</p>
+                                <p className="text-2xl font-bold text-white">23</p>
                             </div>
-                        )}
-                         <div className={`mt-4 p-4 rounded-xl flex items-center gap-3 bg-green-50 text-green-700 border border-green-100 ${subtotal >= 400 ? 'opacity-100' : 'opacity-50'}`}>
-                            <CheckCircleIcon className="h-5 w-5" />
-                            <div className="text-sm">
-                                <strong>Frete Grátis</strong> para compras acima de R$ 400,00.
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Totals */}
-                    <div className="border-t border-gray-100 pt-6 space-y-3 mb-8">
-                        <div className="flex justify-between text-gray-500">
-                            <span>Subtotal</span>
-                            <span>{formatCurrency(subtotal)}</span>
-                        </div>
-                        <div className="flex justify-between text-gray-500">
-                            <span>Frete</span>
-                            <span>{shippingCost === null ? '--' : (shippingCost === 0 ? 'Grátis' : formatCurrency(shippingCost))}</span>
-                        </div>
-                        <div className="flex justify-between text-2xl font-bold text-brand-green-dark pt-2">
-                            <span>Total</span>
-                            <span>{formatCurrency(subtotal + (shippingCost || 0))}</span>
-                        </div>
-                    </div>
-
-                    <button 
-                        onClick={handleFinalizeOrder}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold text-lg shadow-xl shadow-green-200 transition-transform transform hover:-translate-y-1 flex items-center justify-center gap-2"
-                    >
-                        <WhatsAppIcon className="h-6 w-6" />
-                        FINALIZAR VIA WHATSAPP
-                    </button>
-                    <p className="text-center text-xs text-gray-400 mt-4">
-                        Você será redirecionado para o WhatsApp do suporte para confirmar pagamento e envio.
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-export const InviteView = () => {
-    const { consultant } = useOutletContext<DashboardContextType>();
-    const inviteLink = `https://clubebrotos.com/cadastro?indicante=${consultant.id}`;
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(inviteLink);
-        alert("Link copiado!");
-    };
-
-    return (
-        <div className="max-w-2xl mx-auto text-center space-y-8 animate-fade-in pt-12">
-            <div className="inline-block p-4 bg-green-100 rounded-full mb-4">
-                 <UsersIcon className="h-12 w-12 text-brand-green-dark" />
-            </div>
-            <h2 className="text-3xl font-serif font-bold text-brand-green-dark">Cresça sua Equipe</h2>
-            <p className="text-gray-500 text-lg">Convide novos consultores e ganhe comissões sobre as vendas da sua rede.</p>
-
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-4">
-                <div className="flex-1 bg-gray-50 p-4 rounded-xl text-gray-600 font-mono text-sm truncate border border-gray-200">
-                    {inviteLink}
-                </div>
-                <button 
-                    onClick={handleCopy}
-                    className="bg-brand-green-mid hover:bg-brand-green-dark text-white px-6 py-4 rounded-xl font-bold transition shadow-lg shadow-green-100 flex items-center gap-2"
-                >
-                    <ClipboardCopyIcon className="h-5 w-5" />
-                    Copiar
-                </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-                <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-50">
-                    <div className="font-bold text-brand-green-dark text-xl mb-2">1º Nível</div>
-                    <p className="text-sm text-gray-500">Ganhe 10% sobre a primeira compra de quem você indicar.</p>
-                </div>
-                <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-50">
-                    <div className="font-bold text-brand-green-dark text-xl mb-2">Liderança</div>
-                    <p className="text-sm text-gray-500">Bônus de produtividade ao atingir meta de R$ 5k/mês em equipe.</p>
-                </div>
-                <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-50">
-                    <div className="font-bold text-brand-green-dark text-xl mb-2">Prêmios</div>
-                    <p className="text-sm text-gray-500">Viagens e reconhecimentos para os Top Líderes.</p>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-export const BusinessView = () => {
-    return (
-        <div className="space-y-8 animate-fade-in">
-            <h2 className="text-2xl font-serif font-bold text-gray-800">Minha Equipe</h2>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left">
-                     <thead className="bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="p-4 text-sm font-bold text-gray-500">Nome</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Cargo</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Status</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Vendas (Mês)</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Contato</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {MOCK_DATA.team.map((member) => (
-                            <tr key={member.id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                                <td className="p-4 font-medium text-gray-900">{member.name}</td>
-                                <td className="p-4 text-gray-600">{member.role}</td>
-                                <td className="p-4">
-                                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                        member.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                    }`}>
-                                        {member.status}
-                                    </span>
-                                </td>
-                                <td className="p-4 font-bold text-gray-700">{member.sales}</td>
-                                <td className="p-4">
-                                    <button className="text-green-600 hover:text-green-800 text-sm font-bold flex items-center gap-1">
-                                        <WhatsAppIcon className="h-4 w-4" /> Whatsapp
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-};
-
-export const FinancialView = () => {
-    return (
-        <div className="space-y-8 animate-fade-in">
-             <div className="bg-brand-dark-bg text-white rounded-[2rem] p-8 md:p-12 relative overflow-hidden">
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div>
-                        <p className="text-gray-400 font-bold uppercase tracking-widest mb-2">Saldo Disponível</p>
-                        <h2 className="text-5xl font-serif font-bold text-brand-green-mid">
-                            {formatCurrency(MOCK_DATA.financial.balance)}
-                        </h2>
-                    </div>
-                    <button className="px-8 py-4 bg-white text-brand-dark-bg rounded-xl font-bold shadow-lg hover:bg-gray-100 transition-all flex items-center gap-2">
-                        <BanknotesIcon className="h-6 w-6" />
-                        Solicitar Saque
-                    </button>
-                </div>
-             </div>
-
-             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-bold text-gray-800 mb-6">Histórico de Transações</h3>
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
-                            <div className="flex items-center gap-4">
-                                <div className="p-2 bg-green-100 text-green-700 rounded-lg">
-                                    <TrendingUpIcon className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-gray-800">Comissão de Rede</p>
-                                    <p className="text-xs text-gray-500">24 Out 2023</p>
-                                </div>
-                            </div>
-                            <span className="font-bold text-green-600">+ R$ 150,00</span>
-                        </div>
-                         <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
-                            <div className="flex items-center gap-4">
-                                <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
-                                    <TrendingUpIcon className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-gray-800">Bônus de Liderança</p>
-                                    <p className="text-xs text-gray-500">20 Out 2023</p>
-                                </div>
-                            </div>
-                            <span className="font-bold text-blue-600">+ R$ 500,00</span>
-                        </div>
+                        </Link>
                     </div>
                 </div>
+            </div>
 
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-bold text-gray-800 mb-6">Dados Bancários</h3>
-                    <div className="p-4 border border-gray-200 rounded-xl bg-gray-50 mb-4">
-                        <p className="text-sm text-gray-500 mb-1">Chave PIX</p>
-                        <p className="font-bold text-gray-800">cpf@consultor.com</p>
-                    </div>
-                    <button className="text-brand-green-dark font-bold text-sm hover:underline">
-                        Alterar dados de recebimento
-                    </button>
-                </div>
-             </div>
+            {/* Bottom: Consultant Ranking (Premium Component) */}
+            <ConsultantRanking />
         </div>
     );
 };
 
 export const AdminPanelView = () => {
+    // This view manages the "Administração" / "Usuarios" route
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedConsultant, setSelectedConsultant] = useState<any | null>(null);
+
+    const filteredTeam = MOCK_DATA.team.filter(c => 
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        c.id.includes(searchTerm) ||
+        c.status.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="space-y-8 animate-fade-in">
-             <div className="bg-gradient-to-br from-brand-dark-bg to-brand-dark-card text-white rounded-[2rem] p-8 shadow-xl">
-                <h2 className="text-3xl font-serif font-bold mb-6">Painel Administrativo</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/10">
-                        <p className="text-gray-300 text-sm font-bold uppercase">Vendas Totais (Clube)</p>
-                        <h3 className="text-3xl font-bold mt-2">R$ 45.230,00</h3>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/10">
-                         <p className="text-gray-300 text-sm font-bold uppercase">Total de Consultores</p>
-                        <h3 className="text-3xl font-bold mt-2">142</h3>
-                    </div>
-                     <div className="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/10">
-                         <p className="text-gray-300 text-sm font-bold uppercase">Pedidos Pendentes</p>
-                        <h3 className="text-3xl font-bold mt-2 text-yellow-400">8</h3>
-                    </div>
+             <div className="bg-gradient-to-br from-brand-dark-bg to-brand-dark-card text-white rounded-[2rem] p-8 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
+                <div>
+                    <h2 className="text-3xl font-serif font-bold mb-2">Administração de Usuários</h2>
+                    <p className="text-gray-400">Gerencie todos os consultores, visualize cadastros e status.</p>
+                </div>
+                <div className="flex gap-4">
+                     <div className="relative">
+                        <input 
+                            type="text" 
+                            placeholder="Buscar por Nome, ID ou Status" 
+                            className="pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 w-full md:w-80"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        <SearchIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+                     </div>
                 </div>
              </div>
 
-             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                 <h3 className="text-xl font-bold text-gray-800 mb-4">Ações Rápidas</h3>
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                     <button className="p-4 rounded-xl border border-gray-200 hover:border-brand-green-mid hover:bg-green-50 transition flex flex-col items-center gap-2 text-center">
-                         <UserPlusIcon className="h-6 w-6 text-brand-green-dark" />
-                         <span className="font-bold text-gray-700 text-sm">Aprovar Cadastros</span>
-                     </button>
-                      <button className="p-4 rounded-xl border border-gray-200 hover:border-brand-green-mid hover:bg-green-50 transition flex flex-col items-center gap-2 text-center">
-                         <PackageIcon className="h-6 w-6 text-brand-green-dark" />
-                         <span className="font-bold text-gray-700 text-sm">Gerenciar Estoque</span>
-                     </button>
-                      <button className="p-4 rounded-xl border border-gray-200 hover:border-brand-green-mid hover:bg-green-50 transition flex flex-col items-center gap-2 text-center">
-                         <SparklesIcon className="h-6 w-6 text-brand-green-dark" />
-                         <span className="font-bold text-gray-700 text-sm">Config. Sistema</span>
-                     </button>
-                 </div>
+             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                 <table className="w-full text-left">
+                     <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th className="p-6 text-sm font-bold text-gray-500 uppercase tracking-wider">Consultor</th>
+                            <th className="p-6 text-sm font-bold text-gray-500 uppercase tracking-wider">Contato</th>
+                            <th className="p-6 text-sm font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="p-6 text-sm font-bold text-gray-500 uppercase tracking-wider">Vendas (Mês)</th>
+                            <th className="p-6 text-sm font-bold text-gray-500 uppercase tracking-wider text-right">Ação</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-gray-50">
+                        {filteredTeam.map((member) => (
+                            <tr key={member.id} className="hover:bg-green-50/30 transition-colors group">
+                                <td className="p-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-600 border border-gray-200">
+                                            {member.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-800">{member.name}</p>
+                                            <p className="text-xs text-gray-500">ID: {member.id} • {member.role}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-6">
+                                    <p className="text-sm text-gray-600">{member.email}</p>
+                                    <p className="text-xs text-gray-400">{member.phone}</p>
+                                </td>
+                                <td className="p-6">
+                                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${
+                                        member.status === 'Ativo' 
+                                            ? 'bg-green-100 text-green-700 border-green-200' 
+                                            : 'bg-red-50 text-red-600 border-red-100'
+                                    }`}>
+                                        {member.status}
+                                    </span>
+                                </td>
+                                <td className="p-6 font-mono font-bold text-brand-green-dark">{member.sales}</td>
+                                <td className="p-6 text-right">
+                                    <button 
+                                        onClick={() => setSelectedConsultant(member)}
+                                        className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-600 hover:text-brand-green-dark hover:border-brand-green-mid shadow-sm transition-all"
+                                    >
+                                        Ver Ficha
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                     </tbody>
+                 </table>
+                 {filteredTeam.length === 0 && (
+                     <div className="p-12 text-center text-gray-500">
+                         Nenhum consultor encontrado.
+                     </div>
+                 )}
              </div>
+
+             {/* Consultant Details Modal */}
+             {selectedConsultant && (
+                 <ConsultantDetailsModal consultant={selectedConsultant} onClose={() => setSelectedConsultant(null)} />
+             )}
         </div>
     );
 };
@@ -1349,64 +739,41 @@ export const DashboardShell = ({ consultant, children }: { consultant: Consultan
                 {/* 3. Navigation Menu */}
                 <div className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar">
                     
-                    <SidebarItem 
-                        icon={ChartBarIcon} 
-                        label="Visão Geral" 
-                        to={`${basePath}/dashboard`}
-                        active={isActive('/dashboard')}
-                        adminMode={isAdmin}
-                    />
+                    
 
                     {isAdmin ? (
-                        // ADMIN MENU
+                        // --- ADMIN MENU (CLEAN STRUCTURE - ELEVATE SPEC) ---
                         <>
-                             <SidebarItem 
-                                icon={PhotoIcon} 
-                                label="Materiais de Apoio" 
-                                to={`${basePath}/materiais`}
-                                active={isActive('/materiais')}
-                                adminMode={isAdmin} 
-                            />
+                             <div className={`px-6 mt-4 mb-2 text-[10px] font-extrabold uppercase tracking-widest text-white/30`}>
+                                Gerenciamento Central
+                            </div>
+
                             <SidebarItem 
-                                icon={AcademicCapIcon} 
-                                label="UniBrotos" 
-                                to={`${basePath}/unibrotos`}
-                                active={isActive('/unibrotos')}
+                                icon={ChartBarIcon} 
+                                label="Dashboard Gerencial" 
+                                to={`${basePath}/dashboard`}
+                                active={isActive('/dashboard')}
+                                adminMode={isAdmin}
+                            />
+                             <SidebarItem 
+                                icon={BriefcaseIcon} 
+                                label="Meu Negócio" 
+                                to={`${basePath}/negocio`}
+                                active={isActive('/negocio')}
                                 adminMode={isAdmin} 
                             />
                              <SidebarItem 
-                                icon={PackageIcon} 
-                                label="Meus Pedidos" 
-                                to={`${basePath}/meus-pedidos`}
-                                active={isActive('/meus-pedidos')}
-                                adminMode={isAdmin} 
-                            />
-                             <SidebarItem 
-                                icon={ShoppingCartIcon} 
-                                label="Fazer Pedido" 
-                                to={`${basePath}/novo-pedido`}
-                                active={isActive('/novo-pedido')}
+                                icon={LockClosedIcon} 
+                                label="Administração" 
+                                to={`${basePath}/usuarios`}
+                                active={isActive('/usuarios')}
                                 adminMode={isAdmin} 
                             />
 
-                            <div className={`px-6 mt-8 mb-4 text-[10px] font-extrabold uppercase tracking-widest ${isAdmin ? 'text-white/30' : 'text-gray-500'}`}>
-                                Expansão
+                            <div className={`px-6 mt-8 mb-2 text-[10px] font-extrabold uppercase tracking-widest text-white/30`}>
+                                Relatórios e Finanças
                             </div>
-                            
-                            <SidebarItem 
-                                icon={UserPlusIcon} 
-                                label="Convidar Consultor" 
-                                to={`${basePath}/convidar`}
-                                active={isActive('/convidar')}
-                                adminMode={isAdmin} 
-                            />
-                            <SidebarItem 
-                                icon={BriefcaseIcon} 
-                                label="Meu Negócio" 
-                                to={`${basePath}/meu-negocio`}
-                                active={isActive('/meu-negocio')}
-                                adminMode={isAdmin} 
-                            />
+
                             <SidebarItem 
                                 icon={BanknotesIcon} 
                                 label="Financeiro" 
@@ -1415,30 +782,42 @@ export const DashboardShell = ({ consultant, children }: { consultant: Consultan
                                 adminMode={isAdmin} 
                             />
                             <SidebarItem 
-                                icon={TargetIcon} 
-                                label="Metas da Equipe" 
-                                to={`${basePath}/metas`}
-                                active={isActive('/metas')}
+                                icon={ClipboardListIcon} 
+                                label="Relatórios" 
+                                to={`${basePath}/relatorios`}
+                                active={isActive('/relatorios')}
+                                adminMode={isAdmin} 
+                            />
+
+                            <div className={`px-6 mt-8 mb-2 text-[10px] font-extrabold uppercase tracking-widest text-white/30`}>
+                                Sistema e Suporte
+                            </div>
+
+                             <SidebarItem 
+                                icon={ChatIcon} 
+                                label="Suporte e Tickets" 
+                                to={`${basePath}/suporte`}
+                                active={isActive('/suporte')}
                                 adminMode={isAdmin} 
                             />
                             <SidebarItem 
-                                icon={HandshakeIcon} 
-                                label="Solicitações de Saque" 
-                                to={`${basePath}/saques`}
-                                active={isActive('/saques')}
-                                adminMode={isAdmin} 
-                            />
-                             <SidebarItem 
-                                icon={LockClosedIcon} 
-                                label="Administração" 
-                                to={`${basePath}/administracao`}
-                                active={isActive('/administracao')}
+                                icon={SparklesIcon} 
+                                label="Configurações" 
+                                to={`${basePath}/config`}
+                                active={isActive('/config')}
                                 adminMode={isAdmin} 
                             />
                         </>
                     ) : (
-                        // CONSULTANT MENU (Unchanged structure, just style)
+                        // CONSULTANT MENU (Standard)
                         <>
+                            <SidebarItem 
+                                icon={ChartBarIcon} 
+                                label="Visão Geral" 
+                                to={`${basePath}/dashboard`}
+                                active={isActive('/dashboard')}
+                                adminMode={isAdmin}
+                            />
                             <SidebarItem 
                                 icon={ShoppingCartIcon} 
                                 label="Novo Pedido" 
@@ -1536,6 +915,7 @@ export const DashboardShell = ({ consultant, children }: { consultant: Consultan
 
 // --- AUTH SCREENS ---
 
+// Public Login Screen (NO Admin Magic)
 export const LoginScreen = () => {
     const [credential, setCredential] = useState(''); // Unified credential (email or ID)
     const [password, setPassword] = useState('');
@@ -1551,46 +931,6 @@ export const LoginScreen = () => {
         try {
             let emailToAuth = credential;
             let isEmail = credential.includes('@');
-
-            // --- 1. MAGIC ADMIN CHECK (Fallback for Setup) ---
-            if (credential === '000000' && password === 'jo1234') {
-                const adminEmail = 'admin@brotos.com';
-                
-                // Try direct login
-                const { data: loginData } = await supabase.auth.signInWithPassword({
-                    email: adminEmail,
-                    password: password
-                });
-
-                if (loginData.session) {
-                     navigate('/admin/dashboard');
-                     return;
-                }
-
-                // If fails, try to create (first time)
-                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                    email: adminEmail,
-                    password: password
-                });
-
-                if (signUpError) throw new Error('Falha ao criar admin automático.');
-
-                if (signUpData.user) {
-                     const { error: profileError } = await supabase.from('consultants').upsert({
-                         id: '000000',
-                         auth_id: signUpData.user.id,
-                         name: 'Administrador Geral',
-                         email: adminEmail,
-                         role: 'admin',
-                         whatsapp: '',
-                         created_at: new Date().toISOString()
-                     });
-
-                     if (profileError) throw profileError;
-                     navigate('/admin/dashboard');
-                     return;
-                }
-            }
 
             // --- 2. ID LOOKUP (If not email) ---
             if (!isEmail) {
@@ -1608,6 +948,11 @@ export const LoginScreen = () => {
                     throw new Error('ID não encontrado.');
                 }
                 
+                // Security check: if user is admin, force them to use the admin portal
+                if (profiles.role === 'admin') {
+                    throw new Error('Acesso administrativo restrito. Use o Portal Master.');
+                }
+                
                 emailToAuth = profiles.email;
             }
 
@@ -1621,18 +966,7 @@ export const LoginScreen = () => {
 
             // Redirect based on role
             if (data.user) {
-                // Fetch fresh profile to be sure of role
-                const { data: profile } = await supabase
-                    .from('consultants')
-                    .select('role')
-                    .eq('auth_id', data.user.id)
-                    .single();
-
-                if (profile?.role === 'admin') {
-                    navigate('/admin/dashboard');
-                } else {
-                    navigate('/consultor/dashboard');
-                }
+                navigate('/consultor/dashboard');
             }
         } catch (err: any) {
             setError(err.message || 'Erro ao entrar. Verifique suas credenciais.');
@@ -1653,7 +987,7 @@ export const LoginScreen = () => {
                 <div className="p-8 text-center bg-gray-50 border-b border-gray-100">
                     <BrandLogo className="h-16 mx-auto mb-4" />
                     <h2 className="text-2xl font-serif font-bold text-gray-800">Bem-vindo ao Clube</h2>
-                    <p className="text-gray-500 text-sm mt-2">Faça login para gerenciar seu negócio.</p>
+                    <p className="text-gray-500 text-sm mt-2">Área exclusiva para Consultores.</p>
                 </div>
                 
                 <form onSubmit={handleLogin} className="p-8 space-y-6">
@@ -1704,6 +1038,159 @@ export const LoginScreen = () => {
                 </form>
             </div>
             <p className="mt-8 text-gray-500 text-sm relative z-10">© 2024 Brotos da Terra. Todos os direitos reservados.</p>
+        </div>
+    );
+};
+
+// NEW: Admin Login Screen (SECRET URL)
+export const AdminLoginScreen = () => {
+    const [credential, setCredential] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            // --- 1. MAGIC ADMIN CHECK (Fallback for Setup - ONLY HERE) ---
+            if (credential === '000000' && password === 'jo1234') {
+                const adminEmail = 'admin@brotos.com';
+                
+                // Try direct login
+                const { data: loginData } = await supabase.auth.signInWithPassword({
+                    email: adminEmail,
+                    password: password
+                });
+
+                if (loginData.session) {
+                     navigate('/admin/dashboard');
+                     return;
+                }
+
+                // If fails, try to create (first time)
+                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                    email: adminEmail,
+                    password: password
+                });
+
+                if (signUpError) throw new Error('Falha ao criar admin automático.');
+
+                if (signUpData.user) {
+                     const { error: profileError } = await supabase.from('consultants').upsert({
+                         id: '000000',
+                         auth_id: signUpData.user.id,
+                         name: 'Administrador Geral',
+                         email: adminEmail,
+                         role: 'admin',
+                         whatsapp: '',
+                         created_at: new Date().toISOString()
+                     });
+
+                     if (profileError) throw profileError;
+                     navigate('/admin/dashboard');
+                     return;
+                }
+            }
+
+            // Normal Admin Login (Email/Password)
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
+                email: credential, // Admin uses email usually
+                password
+            });
+
+            if (authError) throw authError;
+
+            // Redirect based on role
+            if (data.user) {
+                // Fetch fresh profile to be sure of role
+                const { data: profile } = await supabase
+                    .from('consultants')
+                    .select('role')
+                    .eq('auth_id', data.user.id)
+                    .single();
+
+                if (profile?.role === 'admin') {
+                    navigate('/admin/dashboard');
+                } else {
+                    setError('Esta conta não possui permissões administrativas.');
+                    await supabase.auth.signOut();
+                }
+            }
+        } catch (err: any) {
+            setError(err.message || 'Erro ao entrar. Credenciais inválidas.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-[#051F18] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+             {/* Dark Background Effects */}
+             <div className="absolute inset-0 z-0">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#0A382A] opacity-30 rounded-full blur-[120px]"></div>
+            </div>
+
+            <div className="w-full max-w-md bg-[#0A382A] border border-white/5 rounded-3xl shadow-2xl overflow-hidden relative z-10 animate-fade-in">
+                <div className="p-8 text-center border-b border-white/5">
+                    <BrandLogo className="h-12 mx-auto mb-4 filter brightness-0 invert opacity-80" />
+                    <h2 className="text-xl font-serif font-bold text-white tracking-wide">Portal Master</h2>
+                    <p className="text-green-200/50 text-xs mt-2 uppercase tracking-widest font-bold">Acesso Restrito</p>
+                </div>
+                
+                <form onSubmit={handleLogin} className="p-8 space-y-6">
+                    {error && (
+                        <div className="p-3 bg-red-900/30 text-red-200 text-sm rounded-lg text-center border border-red-900/50">
+                            {error}
+                        </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-green-200/70 ml-1 uppercase">ID Master ou E-mail</label>
+                        <div className="relative">
+                            <LockClosedIcon className="absolute left-4 top-3.5 h-5 w-5 text-green-200/30" />
+                            <input 
+                                type="text" 
+                                required
+                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-white/10 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all bg-[#051F18]/50 text-white placeholder-green-200/20"
+                                placeholder="Acesso Master"
+                                value={credential}
+                                onChange={(e) => setCredential(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-green-200/70 ml-1 uppercase">Chave de Segurança</label>
+                        <div className="relative">
+                            <ShieldCheckIcon className="absolute left-4 top-3.5 h-5 w-5 text-green-200/30" />
+                            <input 
+                                type="password" 
+                                required
+                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-white/10 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all bg-[#051F18]/50 text-white placeholder-green-200/20"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        disabled={loading}
+                        className="w-full bg-[#4CAF50] hover:bg-[#43a047] text-[#051F18] font-bold py-4 rounded-xl shadow-lg shadow-green-900/40 transition-all transform hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-wider text-sm"
+                    >
+                        {loading ? 'Autenticando...' : 'Iniciar Sessão Segura'}
+                    </button>
+                </form>
+            </div>
+             <div className="mt-8 text-center z-10 opacity-30">
+                <LockClosedIcon className="h-6 w-6 text-white mx-auto mb-2" />
+                <p className="text-white text-xs">Conexão Criptografada</p>
+            </div>
         </div>
     );
 };
@@ -1831,3 +1318,210 @@ export const ConsultantRegister = () => {
         </div>
     );
 };
+
+// --- ADDITIONAL VIEWS (Placeholder Implementations for Routing) ---
+
+export const MaterialsView = () => (
+    <div className="space-y-8 animate-fade-in">
+        <div className="flex justify-between items-center">
+             <div>
+                <h2 className="text-3xl font-serif font-bold text-gray-800">Materiais de Apoio</h2>
+                <p className="text-gray-500">Baixe imagens e textos para divulgar.</p>
+            </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all group">
+                    <div className="h-48 bg-gray-100 flex items-center justify-center">
+                        <PhotoIcon className="h-12 w-12 text-gray-300" />
+                    </div>
+                    <div className="p-6">
+                        <h3 className="font-bold text-gray-800 mb-2">Pack de Marketing #{i}</h3>
+                        <p className="text-sm text-gray-500 mb-4">Imagens para redes sociais e stories.</p>
+                        <button className="w-full py-2 border border-brand-green-mid text-brand-green-dark font-bold rounded-lg hover:bg-brand-green-mid hover:text-white transition-colors flex items-center justify-center gap-2">
+                            <DownloadIcon className="h-4 w-4" /> Baixar
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
+export const UniBrotosView = () => (
+    <div className="space-y-8 animate-fade-in">
+        <div className="bg-brand-earth rounded-[2rem] p-8 md:p-12 text-white relative overflow-hidden">
+             <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-4">
+                    <AcademicCapIcon className="h-8 w-8 text-white" />
+                    <span className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">Universidade Corporativa</span>
+                </div>
+                <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">UniBrotos</h2>
+                <p className="text-white/80 max-w-xl text-lg">
+                    Domine as vendas e cresça na carreira com nossos treinamentos exclusivos.
+                </p>
+            </div>
+        </div>
+         <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
+            <PlayCircleIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Módulos em Breve</h3>
+            <p className="text-gray-500">Estamos preparando conteúdos incríveis para você.</p>
+        </div>
+    </div>
+);
+
+export const MyOrdersView = () => (
+    <div className="space-y-8 animate-fade-in">
+         <h2 className="text-3xl font-serif font-bold text-gray-800">Meus Pedidos</h2>
+         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-12 text-center">
+                <PackageIcon className="h-16 w-16 text-gray-200 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-400 mb-2">Nenhum pedido encontrado</h3>
+                <p className="text-gray-400">Você ainda não realizou nenhuma compra.</p>
+            </div>
+         </div>
+    </div>
+);
+
+export const NewOrderView = () => (
+    <div className="space-y-8 animate-fade-in">
+        <div className="flex justify-between items-center">
+            <h2 className="text-3xl font-serif font-bold text-gray-800">Loja do Consultor</h2>
+            <div className="bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm flex items-center gap-2">
+                <ShoppingCartIcon className="h-5 w-5 text-brand-green-mid" />
+                <span className="font-bold text-gray-700">Carrinho (0)</span>
+            </div>
+        </div>
+         <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
+             <StoreIcon className="h-16 w-16 text-gray-200 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">O catálogo de produtos está sendo atualizado.</p>
+        </div>
+    </div>
+);
+
+export const InviteView = () => (
+    <div className="space-y-8 animate-fade-in max-w-2xl mx-auto">
+        <div className="text-center">
+             <h2 className="text-3xl font-serif font-bold text-gray-800 mb-2">Expanda sua Rede</h2>
+             <p className="text-gray-500">Convide novos consultores e ganhe comissões sobre as vendas deles.</p>
+        </div>
+        <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+            <div className="flex flex-col items-center gap-6">
+                <div className="h-24 w-24 bg-brand-green-light/20 rounded-full flex items-center justify-center text-brand-green-dark">
+                    <QrCodeIcon className="h-12 w-12" />
+                </div>
+                <div className="w-full bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center justify-between gap-4">
+                    <span className="text-gray-600 font-mono text-sm truncate">https://brotos.com/convite/REF123456</span>
+                    <button className="text-brand-green-dark hover:bg-white p-2 rounded-lg transition-colors">
+                        <ClipboardCopyIcon className="h-5 w-5" />
+                    </button>
+                </div>
+                <button className="w-full py-4 bg-brand-green-dark text-white font-bold rounded-xl shadow-lg hover:bg-brand-green-mid transition-all flex items-center justify-center gap-2">
+                    <WhatsAppIcon className="h-5 w-5" />
+                    Compartilhar no WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
+export const BusinessView = () => (
+    <div className="space-y-8 animate-fade-in">
+        <h2 className="text-3xl font-serif font-bold text-gray-800">Meu Negócio</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h3 className="text-sm font-bold text-gray-400 uppercase">Consultores Ativos</h3>
+                <p className="text-4xl font-bold text-gray-800 mt-2">12</p>
+            </div>
+             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h3 className="text-sm font-bold text-gray-400 uppercase">Vendas da Rede</h3>
+                <p className="text-4xl font-bold text-brand-green-dark mt-2">R$ 4.500</p>
+            </div>
+        </div>
+        <ConsultantRanking />
+    </div>
+);
+
+export const FinancialView = () => (
+    <div className="space-y-8 animate-fade-in">
+        <h2 className="text-3xl font-serif font-bold text-gray-800">Gestão Financeira</h2>
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-[2rem] p-8 text-white flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl">
+            <div>
+                <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Saldo Disponível</p>
+                <h3 className="text-5xl font-mono font-bold mt-2">R$ 1.250,00</h3>
+            </div>
+            <button className="px-8 py-4 bg-green-500 hover:bg-green-400 text-gray-900 font-bold rounded-xl shadow-lg shadow-green-900/20 transition-all flex items-center gap-2">
+                <BanknotesIcon className="h-5 w-5" />
+                Solicitar Saque
+            </button>
+        </div>
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="font-bold text-gray-800 mb-4">Histórico de Transações</h3>
+            <p className="text-gray-400 text-center py-8">Nenhuma movimentação recente.</p>
+        </div>
+    </div>
+);
+
+// --- Admin Placeholder Views ---
+
+export const AdminGoalsView = () => (
+     <div className="space-y-6 animate-fade-in">
+        <h2 className="text-2xl font-bold text-gray-800">Metas da Rede</h2>
+        <p className="text-gray-500">Configuração de metas (Legado).</p>
+    </div>
+);
+
+export const AdminWithdrawalsView = () => (
+     <div className="space-y-6 animate-fade-in">
+        <h2 className="text-2xl font-bold text-gray-800">Solicitações de Saque</h2>
+        <p className="text-gray-500">Gestão de saques (Legado).</p>
+    </div>
+);
+
+export const AdminReportsView = () => (
+    <div className="space-y-6 animate-fade-in">
+        <h2 className="text-3xl font-serif font-bold text-[#0A382A]">Relatórios</h2>
+        <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
+             <ClipboardListIcon className="h-16 w-16 text-gray-200 mx-auto mb-4" />
+            <p className="text-gray-500">Módulo de relatórios avançados em desenvolvimento.</p>
+        </div>
+    </div>
+);
+
+export const AdminSupportView = () => (
+    <div className="space-y-6 animate-fade-in">
+        <h2 className="text-3xl font-serif font-bold text-[#0A382A]">Central de Suporte</h2>
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div className="flex items-center gap-4 mb-6">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                    <ChatIcon className="h-6 w-6" />
+                </div>
+                <div>
+                    <h3 className="font-bold text-gray-800">Tickets Abertos</h3>
+                    <p className="text-sm text-gray-500">Gerencie as dúvidas dos consultores</p>
+                </div>
+            </div>
+            <p className="text-gray-400 text-center py-4">Nenhum ticket pendente.</p>
+        </div>
+    </div>
+);
+
+export const AdminSettingsView = () => (
+    <div className="space-y-6 animate-fade-in">
+        <h2 className="text-3xl font-serif font-bold text-[#0A382A]">Configurações</h2>
+         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <span className="font-bold text-gray-700">Manutenção do Sistema</span>
+                <div className="w-12 h-6 bg-gray-300 rounded-full relative cursor-pointer">
+                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow"></div>
+                </div>
+            </div>
+             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <span className="font-bold text-gray-700">Novos Cadastros</span>
+                <div className="w-12 h-6 bg-green-500 rounded-full relative cursor-pointer">
+                    <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+);
