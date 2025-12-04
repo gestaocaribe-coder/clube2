@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
@@ -15,9 +14,7 @@ import {
     InviteView, 
     BusinessView, 
     FinancialView, 
-    AdminPanelView,
-    AdminGoalsView,
-    AdminWithdrawalsView
+    AdminPanelView 
 } from './ConsultantSystem';
 
 // --- Auth Guard Component ---
@@ -115,8 +112,6 @@ export default function App() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<OverviewView />} />
             <Route path="administracao" element={<AdminPanelView />} />
-            <Route path="painel-metas" element={<AdminGoalsView />} />
-            <Route path="solicitacoes-saque" element={<AdminWithdrawalsView />} />
             <Route path="materiais" element={<MaterialsView />} />
             <Route path="unibrotos" element={<UniBrotosView />} />
             <Route path="meus-pedidos" element={<MyOrdersView />} />
