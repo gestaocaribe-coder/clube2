@@ -177,8 +177,6 @@ export const OverviewView = () => {
         setRecentSales(mockSales);
     }, [consultant.id]);
 
-    const userName = consultant.name ? consultant.name.split(' ')[0] : 'Consultor';
-
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Header / Welcome */}
@@ -186,7 +184,7 @@ export const OverviewView = () => {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/4 blur-3xl"></div>
                 <div className="relative z-10 max-w-2xl">
                     <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-                        Olá, {userName}! 🌱
+                        Olá, {consultant.name.split(' ')[0]}! 🌱
                     </h2>
                     <p className="text-green-50 text-lg md:text-xl font-light leading-relaxed">
                         Sua jornada de sucesso continua. Você já impactou vidas hoje?
@@ -987,26 +985,6 @@ export const LoginScreen = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
-
-    // Check if user is already logged in on mount
-    useEffect(() => {
-        const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                const { data: profile } = await supabase
-                    .from('consultants')
-                    .select('role')
-                    .eq('auth_id', session.user.id)
-                    .single();
-                
-                if (profile) {
-                    if (profile.role === 'admin') navigate('/admin/dashboard', { replace: true });
-                    else navigate('/consultor/dashboard', { replace: true });
-                }
-            }
-        };
-        checkSession();
-    }, [navigate]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
