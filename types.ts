@@ -95,3 +95,27 @@ export interface Order {
     status: string;
     created_at?: string;
 }
+
+// --- Novos Tipos para Metas e Saques ---
+
+export interface Withdrawal {
+    id: string;
+    consultant_id: string;
+    amount: number;
+    status: 'pending' | 'approved' | 'rejected';
+    created_at: string;
+    processed_at?: string;
+    consultants?: {
+        name: string;
+        email: string;
+    };
+}
+
+export interface GoalMetrics {
+    consultant_id: string;
+    consultant_name: string;
+    total_sales: number;
+    percentage: number;
+    status: 'meta_batida' | 'proximo' | 'distante';
+    bonus_amount: number;
+}
