@@ -319,35 +319,40 @@ export const LoginScreen = () => {
         setError('');
 
         try {
+            const isId = /^\d+$/.test(identifier);
             let emailToLogin = identifier.trim();
 
-            // Detect if input is numeric ID (simple check)
-            const isId = /^\d+$/.test(identifier);
-
+            // 1. Fetch user role first to block Admins from this login screen
+            let query = supabase.from('consultants').select('email, role');
+            
             if (isId) {
-                // If it's an ID, find the email
-                const { data: consultant, error: searchError } = await supabase
-                    .from('consultants')
-                    .select('email')
-                    .eq('id', identifier)
-                    .single();
-
-                if (searchError || !consultant) {
-                    throw new Error('ID de consultor não encontrado.');
-                }
-                emailToLogin = consultant.email;
+                query = query.eq('id', identifier);
+            } else {
+                query = query.eq('email', identifier);
             }
 
-            // Sign In
-            const { data, error: authError } = await supabase.auth.signInWithPassword({
+            const { data: consultant, error: searchError } = await query.single();
+
+            if (searchError || !consultant) {
+                throw new Error('Usuário não encontrado.');
+            }
+
+            // --- SECURITY CHECK: BLOCK ADMIN ---
+            if (consultant.role === 'admin') {
+                throw new Error('Acesso restrito. Administradores devem usar o Portal Master.');
+            }
+
+            // 2. Proceed with login using the resolved email
+            emailToLogin = consultant.email;
+
+            const { error: authError } = await supabase.auth.signInWithPassword({
                 email: emailToLogin,
                 password: password,
             });
 
             if (authError) throw authError;
 
-            // Auth successful, Profile check in ProtectedRoute will handle redirection
-            // But we can help it a bit by fetching role here if we wanted to be explicit
+            // Auth successful
             navigate('/consultor/dashboard');
 
         } catch (err: any) {
