@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
