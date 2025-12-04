@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from './lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
@@ -154,7 +155,7 @@ export const GodMode = () => {
             <header className="bg-black border-b border-gray-800 p-4 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <div className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">GOD MODE ACTIVE</div>
-                    <span className="font-mono text-sm text-gray-500">Connected to: Production DB</span>
+                    <span className="font-mono text-sm text-gray-500">Connected to: Production DB (Secure)</span>
                 </div>
                 <button onClick={() => navigate('/admin/dashboard')} className="text-xs text-gray-500 hover:text-white">EXIT TO ADMIN</button>
             </header>

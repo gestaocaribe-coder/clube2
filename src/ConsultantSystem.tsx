@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, createContext, useContext } from 'react';
 import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
@@ -49,6 +48,9 @@ import {
     ShieldCheckIcon
 } from './components/Icons';
 import { Consultant, Order, Sale, Material, Lesson, Withdrawal, GoalMetric } from './types';
+
+// --- Version Marker for Git ---
+// v1.2.0 - Admin Sidebar Content Update
 
 // --- Context Type for Outlet ---
 type DashboardContextType = {
@@ -322,7 +324,7 @@ export const LoginScreen = () => {
             const isId = /^\d+$/.test(identifier);
             let emailToLogin = identifier.trim();
 
-            // 1. Fetch user role first to block Admins from this login screen
+            // 1. Fetch user role first to block Admins from this login screen (Pre-Auth Check)
             let query = supabase.from('consultants').select('email, role');
             
             if (isId) {
@@ -337,7 +339,7 @@ export const LoginScreen = () => {
                 throw new Error('Usuário não encontrado.');
             }
 
-            // --- SECURITY CHECK: BLOCK ADMIN ---
+            // --- PRE-AUTH SECURITY CHECK: BLOCK ADMIN ---
             if (consultant.role === 'admin') {
                 throw new Error('Acesso restrito. Administradores devem usar o Portal Master.');
             }
@@ -345,19 +347,39 @@ export const LoginScreen = () => {
             // 2. Proceed with login using the resolved email
             emailToLogin = consultant.email;
 
-            const { error: authError } = await supabase.auth.signInWithPassword({
+            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
                 email: emailToLogin,
                 password: password,
             });
 
             if (authError) throw authError;
 
-            // Auth successful
+            // --- POST-AUTH SECURITY CHECK: DOUBLE CHECK ADMIN ---
+            // This is crucial because auth status might override local check if manually manipulated
+            if (authData.user) {
+                const { data: checkProfile } = await supabase
+                    .from('consultants')
+                    .select('role')
+                    .eq('auth_id', authData.user.id)
+                    .single();
+
+                if (checkProfile && checkProfile.role === 'admin') {
+                    // Force logout immediately
+                    await supabase.auth.signOut();
+                    throw new Error('Acesso restrito. Administradores devem usar o Portal Master.');
+                }
+            }
+
+            // Auth successful and role validated
             navigate('/consultor/dashboard');
 
         } catch (err: any) {
             console.error(err);
             setError(err.message || 'Falha no login. Verifique suas credenciais.');
+            if (err.message && err.message.includes('Acesso restrito')) {
+                // Clear password to prevent quick retry
+                setPassword('');
+            }
         } finally {
             setLoading(false);
         }
@@ -380,7 +402,7 @@ export const LoginScreen = () => {
                     </div>
 
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-lg">
+                        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-lg animate-fade-in">
                             {error}
                         </div>
                     )}
@@ -492,6 +514,13 @@ export const AdminLoginScreen = () => {
                              });
                          if (profileError) console.error('Error creating admin profile:', profileError);
                      }
+                } else {
+                    // --- FORCE ROLE CORRECTION (SELF-HEALING) ---
+                    // If user 000000 exists but was somehow created as 'consultant', fix it now.
+                    await supabase
+                        .from('consultants')
+                        .update({ role: 'admin' })
+                        .eq('id', '000000');
                 }
 
                 // Log in as Admin
@@ -841,6 +870,15 @@ export const DashboardShell = ({ children, consultant }: { children?: React.Reac
                                     <NavItem to="/admin/relatorios" icon={PresentationChartLineIcon} label="Relatórios" />
                                     <NavItem to="/admin/metas" icon={TargetIcon} label="Metas da Equipe" />
                                     <NavItem to="/admin/saques" icon={CurrencyDollarIcon} label="Solicitações de Saque" />
+                                </div>
+                            </div>
+
+                            {/* NOVA SEÇÃO: CONTEÚDO E RECURSOS */}
+                            <div>
+                                <h4 className="px-4 text-[10px] font-extrabold text-white/30 uppercase tracking-[0.2em] mb-3">Conteúdo e Recursos</h4>
+                                <div className="space-y-1">
+                                    <NavItem to="/admin/materiais" icon={PhotoIcon} label="Materiais de Apoio" />
+                                    <NavItem to="/admin/unibrotos" icon={AcademicCapIcon} label="UniBrotos" />
                                 </div>
                             </div>
 
