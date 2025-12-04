@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, createContext, useContext } from 'react';
 import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
@@ -50,7 +51,7 @@ import {
 import { Consultant, Order, Sale, Material, Lesson, Withdrawal, GoalMetric } from './types';
 
 // --- Version Marker for Git ---
-// v1.3.0 - Activated Product Catalog
+// v1.3.1 - Security Patch & God Mode
 
 // --- Context Type for Outlet ---
 type DashboardContextType = {
