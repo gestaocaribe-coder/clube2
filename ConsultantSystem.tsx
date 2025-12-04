@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
 import { 
@@ -62,16 +63,17 @@ const formatCurrency = (value: number) => {
     }).format(value);
 };
 
-// Use MOCK_DATA for demo, but fetch real data in production logic
-const MOCK_DATA = {
+// --- DATA SOURCE (Simulating API Response) ---
+// In production, this would be replaced by a fetch to Supabase
+const DB_LOCAL_STATE = {
     team: [
-        { id: '007053', name: 'Cleide Maia', role: 'Consultor', status: 'Ativo', sales: 'R$ 1.250,00', phone: '5511999999999', email: 'cleide@email.com', address: 'Rua das Flores, 123', city: 'São Paulo', state: 'SP', doc: '123.456.789-00' },
-        { id: '102031', name: 'João Santos', role: 'Consultor', status: 'Ativo', sales: 'R$ 5.200,00', phone: '5511988888888', email: 'joao@email.com', address: 'Av. Brasil, 500', city: 'Rio de Janeiro', state: 'RJ', doc: '222.333.444-55' },
-        { id: '102032', name: 'Ana Costa', role: 'Consultor', status: 'Inativo', sales: 'R$ 0,00', phone: '5511977777777', email: 'ana@email.com', address: 'Rua Projetada, 10', city: 'Salvador', state: 'BA', doc: '999.888.777-66' },
-        { id: '102033', name: 'Pedro Alves', role: 'Líder', status: 'Ativo', sales: 'R$ 3.450,00', phone: '5511966666666', email: 'pedro@email.com', address: 'Rua da Praia, 45', city: 'Recife', state: 'PE', doc: '555.666.777-88' },
-        { id: '102034', name: 'Carla Lima', role: 'Consultor', status: 'Ativo', sales: 'R$ 825,00', phone: '5511955555555', email: 'carla@email.com', address: 'Rua Nova, 88', city: 'Curitiba', state: 'PR', doc: '111.222.333-44' },
-        { id: '102035', name: 'Marcos Rocha', role: 'Consultor', status: 'Inativo', sales: 'R$ 0,00', phone: '5511944444444', email: 'marcos@email.com', address: 'Av. Central, 900', city: 'Porto Alegre', state: 'RS', doc: '444.555.666-99' },
-        { id: '102036', name: 'Julia Roberts', role: 'Líder', status: 'Ativo', sales: 'R$ 8.900,00', phone: '5511933333333', email: 'julia@email.com', address: 'Rua Oscar Freire, 1000', city: 'São Paulo', state: 'SP', doc: '777.888.999-00' },
+        { id: '007053', name: 'Cleide Maia', role: 'Consultor', status: 'Ativo', sales: 'R$ 1.250,00', phone: '5511999999999', email: 'cleide@email.com', address: 'Rua das Flores, 123', city: 'São Paulo', state: 'SP', doc: '123.456.789-00', joinDate: '2023-10-01', invitedBy: '000000' },
+        { id: '102031', name: 'João Santos', role: 'Consultor', status: 'Ativo', sales: 'R$ 5.200,00', phone: '5511988888888', email: 'joao@email.com', address: 'Av. Brasil, 500', city: 'Rio de Janeiro', state: 'RJ', doc: '222.333.444-55', joinDate: '2023-11-15', invitedBy: '007053' },
+        { id: '102032', name: 'Ana Costa', role: 'Consultor', status: 'Inativo', sales: 'R$ 0,00', phone: '5511977777777', email: 'ana@email.com', address: 'Rua Projetada, 10', city: 'Salvador', state: 'BA', doc: '999.888.777-66', joinDate: '2023-09-10', invitedBy: '007053' },
+        { id: '102033', name: 'Pedro Alves', role: 'Líder', status: 'Ativo', sales: 'R$ 3.450,00', phone: '5511966666666', email: 'pedro@email.com', address: 'Rua da Praia, 45', city: 'Recife', state: 'PE', doc: '555.666.777-88', joinDate: '2023-10-05', invitedBy: '000000' },
+        { id: '102034', name: 'Carla Lima', role: 'Consultor', status: 'Ativo', sales: 'R$ 825,00', phone: '5511955555555', email: 'carla@email.com', address: 'Rua Nova, 88', city: 'Curitiba', state: 'PR', doc: '111.222.333-44', joinDate: '2023-12-01', invitedBy: '102033' },
+        { id: '102035', name: 'Marcos Rocha', role: 'Consultor', status: 'Inativo', sales: 'R$ 0,00', phone: '5511944444444', email: 'marcos@email.com', address: 'Av. Central, 900', city: 'Porto Alegre', state: 'RS', doc: '444.555.666-99', joinDate: '2023-08-20', invitedBy: '102033' },
+        { id: '102036', name: 'Julia Roberts', role: 'Líder', status: 'Ativo', sales: 'R$ 8.900,00', phone: '5511933333333', email: 'julia@email.com', address: 'Rua Oscar Freire, 1000', city: 'São Paulo', state: 'SP', doc: '777.888.999-00', joinDate: '2023-11-20', invitedBy: '000000' },
     ],
     financial: {
         balance: 3450.00,
@@ -249,89 +251,145 @@ const ConsultantDetailsModal = ({ consultant, onClose }: { consultant: any, onCl
     );
 };
 
-// --- NEW COMPONENT: ConsultantRanking (Replaces Simulator in Admin) ---
+// --- NEW COMPONENT: RevenueGrowthSimulator (Strategic Admin Tool) ---
 
-const ConsultantRanking = () => {
-    // Parse currency string to number for sorting
-    const parseValue = (str: string) => parseFloat(str.replace('R$ ', '').replace('.', '').replace(',', '.'));
+const RevenueGrowthSimulator = () => {
+    // State for the sliders (Inputs)
+    const [newConsultantsGoal, setNewConsultantsGoal] = useState(50);
+    const [activationRateGoal, setActivationRateGoal] = useState(15); // Percentage
+    const [ticketAverageGoal, setTicketAverageGoal] = useState(250);
+
+    // Business Logic: Calculate Estimated Monthly Revenue
+    // Formula: (Active Base + New Consultants) * Activation Rate * Ticket Average
+    // *Simplified for simulation purposes*
     
-    // Sort team by sales descending
-    const rankedTeam = [...MOCK_DATA.team].sort((a, b) => parseValue(b.sales) - parseValue(a.sales));
-    const top3 = rankedTeam.slice(0, 3);
-    const rest = rankedTeam.slice(3);
+    // Get real base numbers from DB_LOCAL_STATE
+    const currentTotalConsultants = DB_LOCAL_STATE.team.length; 
+    
+    // Logic: 
+    // Total Potential Active = Current Base + New Goal
+    // Active Users = Total Potential * (Activation Rate / 100)
+    // Revenue = Active Users * Ticket Average
+    
+    const totalPotentialBase = 500 + newConsultantsGoal; // Assuming 500 base for simulation scale + goal
+    const activeUsers = Math.floor(totalPotentialBase * (activationRateGoal / 100));
+    const estimatedRevenue = activeUsers * ticketAverageGoal;
 
     return (
-        <div className="bg-[#0A382A] rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-green-900/30">
+        <div className="bg-[#0A382A] rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-green-900/30 border border-white/5">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-8 border-b border-white/10 pb-6 relative z-10">
-                 <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10 shadow-inner">
-                    <SparklesIcon className="h-8 w-8 text-[#FFD700]" />
-                 </div>
-                 <div>
-                     <h3 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-white">Ranking de Consultores</h3>
-                     <p className="text-green-100/60 text-sm mt-1">Os maiores destaques da sua rede neste mês.</p>
-                 </div>
-            </div>
-
-            {/* TOP 3 PODIUM */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-10">
-                {/* 2nd Place */}
-                <div className="order-2 md:order-1 bg-gradient-to-b from-gray-300/10 to-transparent border border-gray-400/20 rounded-2xl p-6 flex flex-col items-center justify-end text-center transform md:translate-y-4">
-                    <div className="w-16 h-16 rounded-full border-4 border-gray-300 bg-gray-800 flex items-center justify-center font-bold text-xl text-gray-300 mb-3 shadow-lg">
-                        {top3[1]?.name.charAt(0)}
-                    </div>
-                    <div className="text-gray-300 font-bold text-lg mb-1">{top3[1]?.name}</div>
-                    <div className="text-sm text-gray-400 mb-2">{top3[1]?.role}</div>
-                    <div className="px-4 py-1 bg-gray-300/20 rounded-full text-gray-200 font-bold text-sm">
-                        {top3[1]?.sales}
-                    </div>
-                    <div className="mt-4 text-4xl font-black text-gray-500/20">2º</div>
-                </div>
-
-                {/* 1st Place */}
-                <div className="order-1 md:order-2 bg-gradient-to-b from-yellow-500/20 to-transparent border border-yellow-500/30 rounded-2xl p-6 flex flex-col items-center text-center shadow-[0_0_30px_rgba(255,215,0,0.1)] transform md:-translate-y-4">
-                     <div className="absolute -top-6">
-                        <SparklesIcon className="h-12 w-12 text-yellow-400 animate-bounce" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 relative z-10">
+                <div className="flex items-center gap-4">
+                     <div className="p-3 bg-[#4CAF50] rounded-2xl shadow-lg shadow-green-500/20">
+                        <PresentationChartLineIcon className="h-8 w-8 text-white" />
                      </div>
-                    <div className="w-20 h-20 rounded-full border-4 border-yellow-400 bg-gray-800 flex items-center justify-center font-bold text-2xl text-yellow-400 mb-3 shadow-xl">
-                        {top3[0]?.name.charAt(0)}
-                    </div>
-                    <div className="text-yellow-100 font-bold text-xl mb-1">{top3[0]?.name}</div>
-                    <div className="text-sm text-yellow-200/60 mb-2">{top3[0]?.role}</div>
-                    <div className="px-5 py-2 bg-yellow-500/20 rounded-full text-yellow-300 font-bold text-lg border border-yellow-500/20">
-                        {top3[0]?.sales}
-                    </div>
-                    <div className="mt-4 text-5xl font-black text-yellow-500/20">1º</div>
+                     <div>
+                         <h3 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-white">Simulador de Crescimento da Receita</h3>
+                         <p className="text-green-100/60 text-sm mt-1">Projeção estratégica baseada em métricas de rede.</p>
+                     </div>
                 </div>
-
-                {/* 3rd Place */}
-                <div className="order-3 bg-gradient-to-b from-orange-700/10 to-transparent border border-orange-700/20 rounded-2xl p-6 flex flex-col items-center justify-end text-center transform md:translate-y-8">
-                    <div className="w-16 h-16 rounded-full border-4 border-orange-600 bg-gray-800 flex items-center justify-center font-bold text-xl text-orange-600 mb-3 shadow-lg">
-                        {top3[2]?.name.charAt(0)}
-                    </div>
-                    <div className="text-orange-100 font-bold text-lg mb-1">{top3[2]?.name}</div>
-                    <div className="text-sm text-orange-200/60 mb-2">{top3[2]?.role}</div>
-                    <div className="px-4 py-1 bg-orange-600/20 rounded-full text-orange-300 font-bold text-sm">
-                        {top3[2]?.sales}
-                    </div>
-                     <div className="mt-4 text-4xl font-black text-orange-700/20">3º</div>
+                <div className="bg-white/5 px-6 py-3 rounded-xl border border-white/5 text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-green-300">Receita Mensal Estimada</p>
+                    <p className="text-3xl font-mono font-bold text-white">{formatCurrency(estimatedRevenue)}</p>
                 </div>
             </div>
 
-            {/* List for the rest */}
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5 relative z-10 max-h-64 overflow-y-auto custom-scrollbar">
-                {rest.map((consultant, index) => (
-                    <div key={consultant.id} className="flex items-center justify-between p-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition rounded-lg">
-                        <div className="flex items-center gap-4">
-                            <span className="text-white/30 font-bold w-6">{index + 4}º</span>
-                            <div className="flex flex-col">
-                                <span className="font-bold text-white text-sm">{consultant.name}</span>
-                                <span className="text-xs text-white/50">ID: {consultant.id}</span>
-                            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 relative z-10">
+                {/* Inputs Section */}
+                <div className="lg:col-span-2 space-y-8">
+                    {/* Slider 1: New Consultants */}
+                    <div>
+                        <div className="flex justify-between mb-2">
+                            <label className="text-sm font-bold text-green-100 flex items-center gap-2">
+                                <UserPlusIcon className="h-4 w-4" /> Meta de Novos Consultores / Mês
+                            </label>
+                            <span className="font-mono text-[#4CAF50] font-bold">{newConsultantsGoal} un.</span>
                         </div>
-                        <span className="font-mono font-bold text-green-400 text-sm">{consultant.sales}</span>
+                        <input 
+                            type="range" min="10" max="500" step="10"
+                            value={newConsultantsGoal}
+                            onChange={(e) => setNewConsultantsGoal(parseInt(e.target.value))}
+                            className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#4CAF50]"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>10</span>
+                            <span>Expansão da Base</span>
+                            <span>500</span>
+                        </div>
                     </div>
-                ))}
+
+                    {/* Slider 2: Activation Rate */}
+                    <div>
+                        <div className="flex justify-between mb-2">
+                            <label className="text-sm font-bold text-green-100 flex items-center gap-2">
+                                <TargetIcon className="h-4 w-4" /> Meta de Ativação / Mês
+                            </label>
+                            <span className="font-mono text-[#4CAF50] font-bold">{activationRateGoal}%</span>
+                        </div>
+                        <input 
+                            type="range" min="5" max="100" step="5"
+                            value={activationRateGoal}
+                            onChange={(e) => setActivationRateGoal(parseInt(e.target.value))}
+                            className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#4CAF50]"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>5%</span>
+                            <span>Produtividade</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+
+                    {/* Slider 3: Ticket Average */}
+                    <div>
+                        <div className="flex justify-between mb-2">
+                            <label className="text-sm font-bold text-green-100 flex items-center gap-2">
+                                <BanknotesIcon className="h-4 w-4" /> Ticket Médio Alvo
+                            </label>
+                            <span className="font-mono text-[#4CAF50] font-bold">{formatCurrency(ticketAverageGoal)}</span>
+                        </div>
+                        <input 
+                            type="range" min="100" max="1000" step="50"
+                            value={ticketAverageGoal}
+                            onChange={(e) => setTicketAverageGoal(parseInt(e.target.value))}
+                            className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#4CAF50]"
+                        />
+                         <div className="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>R$ 100</span>
+                            <span>Valor da Venda</span>
+                            <span>R$ 1.000</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Scenarios / Output */}
+                <div className="bg-white/5 rounded-3xl p-6 border border-white/5 flex flex-col justify-center gap-4">
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400 text-center mb-2">Cenários Projetados</p>
+                    
+                    <div className={`p-4 rounded-xl border transition-all ${estimatedRevenue < 50000 ? 'bg-white/10 border-[#4CAF50] shadow-lg' : 'bg-transparent border-white/5 opacity-50'}`}>
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-gray-300">Conservador</span>
+                            <span className="font-mono font-bold text-white">~R$ 35k</span>
+                        </div>
+                    </div>
+
+                    <div className={`p-4 rounded-xl border transition-all ${estimatedRevenue >= 50000 && estimatedRevenue < 150000 ? 'bg-white/10 border-[#4CAF50] shadow-lg' : 'bg-transparent border-white/5 opacity-50'}`}>
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-gray-300">Ideal</span>
+                            <span className="font-mono font-bold text-white">~R$ 100k</span>
+                        </div>
+                    </div>
+
+                    <div className={`p-4 rounded-xl border transition-all ${estimatedRevenue >= 150000 ? 'bg-white/10 border-[#4CAF50] shadow-lg' : 'bg-transparent border-white/5 opacity-50'}`}>
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-gray-300">Agressivo</span>
+                            <span className="font-mono font-bold text-white">R$ 150k+</span>
+                        </div>
+                    </div>
+
+                    <button className="mt-4 w-full py-3 bg-[#4CAF50] text-[#0A382A] font-bold rounded-xl hover:bg-green-400 transition-colors shadow-lg">
+                        Aplicar Metas
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -430,102 +488,99 @@ export const OverviewView = () => {
 };
 
 export const AdminOverviewView = () => {
-    const { consultant } = useOutletContext<DashboardContextType>();
-    const [tab, setTab] = useState<'revenda' | 'lideranca'>('revenda');
+    // ADMIN DASHBOARD
+    // Calculates metrics dynamically from DB_LOCAL_STATE to replace mock values
+    
+    // 1. Calculate Active Consultants
+    const activeConsultants = DB_LOCAL_STATE.team.filter(c => c.status === 'Ativo').length;
+    
+    // 2. Calculate Inactive
+    const inactiveConsultants = DB_LOCAL_STATE.team.filter(c => c.status === 'Inativo').length;
+    
+    // 3. Calculate New (Last 30 days - simulated logic)
+    // In a real app, compare c.joinDate with Date.now()
+    const newConsultants = 4; // Simulated from list
+
+    // 4. Total Referrals (Anyone who has an inviter that isn't root 000000)
+    const totalReferrals = DB_LOCAL_STATE.team.filter(c => c.invitedBy && c.invitedBy !== '000000').length;
 
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Header Date Info */}
             <div className="flex justify-between items-center px-2">
                 <div>
-                     <h2 className="text-2xl md:text-3xl font-serif font-bold text-[#0A382A]">Dashboard Gerencial 📊</h2>
+                     {/* PERSONALIZED ADMIN GREETING */}
+                     <h2 className="text-2xl md:text-3xl font-serif font-bold text-[#0A382A]">Olá, Administrador 👋</h2>
                      <p className="text-gray-500 text-sm">Visão global e estratégica da rede.</p>
                 </div>
                 <span className="text-gray-400 text-sm italic hidden md:block">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
             </div>
 
-            {/* HERO SECTION - SPLIT LAYOUT */}
-            <div className="flex flex-col xl:flex-row gap-6">
-                
-                {/* Left: Main Hero Banner (Green #0A382A) */}
-                <div className="flex-[2] bg-[#0A382A] rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden flex flex-col justify-center min-h-[420px] shadow-lg shadow-green-900/20">
-                    {/* Background Texture */}
-                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white opacity-[0.03] rounded-full translate-x-1/3 -translate-y-1/3 blur-3xl"></div>
-                    
-                    <div className="relative z-10">
-                        <div className="inline-block bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 mb-6">
-                            <span className="text-xs font-bold uppercase tracking-widest text-green-100">Rede Global</span>
-                        </div>
-                        
-                        <h1 className="text-4xl md:text-5xl font-serif font-bold leading-tight mb-6 text-white">
-                            Monitore o <br/>
-                            <span className="text-[#4CAF50]">Crescimento</span>
-                        </h1>
-                        
-                        <p className="text-green-50/70 text-lg font-light max-w-lg mb-10 leading-relaxed">
-                            Acompanhe em tempo real o desempenho de todos os consultores, novas adesões e volume de vendas.
-                        </p>
-
-                        <div className="flex flex-wrap gap-4">
-                            <Link to="/admin/usuarios" className="flex-1 md:flex-none px-6 py-4 bg-white text-[#0A382A] rounded-2xl font-bold shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all flex items-center justify-center gap-3 min-w-[200px] group">
-                                <UsersIcon className="h-6 w-6 group-hover:scale-110 transition-transform" />
-                                <div className="text-left">
-                                    <span className="block text-[10px] uppercase text-gray-500 font-extrabold tracking-wider">Consultores</span>
-                                    <span className="text-lg">Gerenciar</span>
-                                </div>
-                            </Link>
-                            
-                            <Link to="/admin/financeiro" className="flex-1 md:flex-none px-6 py-4 bg-[#144d3b] text-white border border-white/5 rounded-2xl font-bold hover:bg-[#1a5e48] transition-all flex items-center justify-center gap-3 min-w-[200px]">
-                                <BanknotesIcon className="h-6 w-6 text-[#4CAF50]" />
-                                <div className="text-left">
-                                    <span className="block text-[10px] uppercase text-gray-400 font-extrabold tracking-wider">Acessar</span>
-                                    <span className="text-lg">Financeiro</span>
-                                </div>
-                            </Link>
-                        </div>
+            {/* NETWORK SUMMARY CARDS (Dynamic Data) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                 {/* Card 1: Active */}
+                 <Link to="/admin/usuarios" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
+                    <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
+                        <CheckCircleIcon className="h-24 w-24 text-[#0A382A]" />
                     </div>
-                </div>
-
-                {/* Right: Info Card (Dark #1C2833) */}
-                <div className="w-full xl:w-96 bg-[#1C2833] rounded-[2.5rem] p-8 text-white flex flex-col shadow-lg shadow-gray-900/20">
-                    <h3 className="text-xl font-bold mb-6 text-white">Resumo da Rede</h3>
-                    
-                    <div className="space-y-6 flex-1 flex flex-col justify-center">
-                        <Link to="/admin/usuarios" className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-4 hover:bg-white/10 transition cursor-pointer group">
-                            <div className="p-3 bg-green-500/20 text-green-400 rounded-xl group-hover:scale-110 transition-transform">
-                                <UserPlusIcon className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-400 uppercase font-bold">Novos (30d)</p>
-                                <p className="text-2xl font-bold text-white">14</p>
-                            </div>
-                        </Link>
-
-                         <Link to="/admin/usuarios" className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-4 hover:bg-white/10 transition cursor-pointer group">
-                            <div className="p-3 bg-blue-500/20 text-blue-400 rounded-xl group-hover:scale-110 transition-transform">
-                                <CheckCircleIcon className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-400 uppercase font-bold">Ativos</p>
-                                <p className="text-2xl font-bold text-white">87</p>
-                            </div>
-                        </Link>
-
-                         <Link to="/admin/financeiro" className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-4 hover:bg-white/10 transition cursor-pointer group">
-                            <div className="p-3 bg-yellow-500/20 text-yellow-400 rounded-xl group-hover:scale-110 transition-transform">
-                                <ShoppingCartIcon className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-400 uppercase font-bold">Pedidos (Hoje)</p>
-                                <p className="text-2xl font-bold text-white">23</p>
-                            </div>
-                        </Link>
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-green-100 text-[#0A382A] rounded-xl">
+                            <UsersIcon className="h-6 w-6" />
+                        </div>
+                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Consultores Ativos</p>
                     </div>
+                    <h3 className="text-3xl font-bold text-[#0A382A]">{activeConsultants}</h3>
+                    <p className="text-xs text-green-600 mt-2 font-bold">Produtividade Alta</p>
+                </Link>
+
+                {/* Card 2: New */}
+                <Link to="/admin/usuarios" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
+                     <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
+                        <UserPlusIcon className="h-24 w-24 text-blue-600" />
+                    </div>
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                            <UserPlusIcon className="h-6 w-6" />
+                        </div>
+                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Novos Cadastros</p>
+                    </div>
+                    <h3 className="text-3xl font-bold text-gray-800">{newConsultants}</h3>
+                    <p className="text-xs text-blue-600 mt-2 font-bold">Últimos 30 dias</p>
+                </Link>
+
+                {/* Card 3: Inactive */}
+                <Link to="/admin/usuarios" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
+                     <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
+                        <UserCircleIcon className="h-24 w-24 text-gray-600" />
+                    </div>
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-gray-100 text-gray-600 rounded-xl">
+                            <UserCircleIcon className="h-6 w-6" />
+                        </div>
+                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Inativos</p>
+                    </div>
+                    <h3 className="text-3xl font-bold text-gray-800">{inactiveConsultants}</h3>
+                    <p className="text-xs text-red-500 mt-2 font-bold">Ação Necessária</p>
+                </Link>
+
+                {/* Card 4: Total Referrals */}
+                <div className="bg-[#1C2833] p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-all group relative overflow-hidden">
+                     <div className="absolute right-0 top-0 p-8 opacity-10 transform group-hover:scale-110 transition-transform">
+                        <TargetIcon className="h-24 w-24 text-white" />
+                    </div>
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-[#4CAF50] text-white rounded-xl shadow-lg shadow-green-900/50">
+                            <HandshakeIcon className="h-6 w-6" />
+                        </div>
+                        <p className="text-sm font-bold text-gray-400 uppercase tracking-wide">Total Indicações</p>
+                    </div>
+                    <h3 className="text-3xl font-bold text-white">{totalReferrals}</h3>
+                    <p className="text-xs text-[#4CAF50] mt-2 font-bold">Alavancagem de Rede</p>
                 </div>
             </div>
 
-            {/* Bottom: Consultant Ranking (Premium Component) */}
-            <ConsultantRanking />
+            {/* REVENUE GROWTH SIMULATOR (Replacing Ranking) */}
+            <RevenueGrowthSimulator />
         </div>
     );
 };
@@ -535,7 +590,7 @@ export const AdminPanelView = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedConsultant, setSelectedConsultant] = useState<any | null>(null);
 
-    const filteredTeam = MOCK_DATA.team.filter(c => 
+    const filteredTeam = DB_LOCAL_STATE.team.filter(c => 
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
         c.id.includes(searchTerm) ||
         c.status.toLowerCase().includes(searchTerm.toLowerCase())
@@ -739,8 +794,6 @@ export const DashboardShell = ({ consultant, children }: { consultant: Consultan
                 {/* 3. Navigation Menu */}
                 <div className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar">
                     
-                    
-
                     {isAdmin ? (
                         // --- ADMIN MENU (CLEAN STRUCTURE - ELEVATE SPEC) ---
                         <>
@@ -983,7 +1036,8 @@ export const LoginScreen = () => {
                 <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-earth opacity-10 blur-[100px] rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
             </div>
 
-            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10 animate-slide-up">
+            {/* WHITE CARD CONTAINER (Solid White for Contrast) */}
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10 animate-slide-up border border-gray-100">
                 <div className="p-8 text-center bg-gray-50 border-b border-gray-100">
                     <BrandLogo className="h-16 mx-auto mb-4" />
                     <h2 className="text-2xl font-serif font-bold text-gray-800">Bem-vindo ao Clube</h2>
@@ -998,12 +1052,13 @@ export const LoginScreen = () => {
                     )}
                     
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 ml-1">Usuário (E-mail ou ID)</label>
+                        {/* UPDATED LABEL: ID Consultor */}
+                        <label className="text-sm font-bold text-gray-700 ml-1">ID Consultor</label>
                         <input 
                             type="text" 
                             required
                             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-green-mid focus:ring-2 focus:ring-brand-green-light outline-none transition-all bg-gray-50 focus:bg-white"
-                            placeholder="Digite seu ID ou E-mail"
+                            placeholder="Digite seu ID"
                             value={credential}
                             onChange={(e) => setCredential(e.target.value)}
                         />
@@ -1128,34 +1183,36 @@ export const AdminLoginScreen = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#051F18] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-[#0A382A] flex flex-col items-center justify-center p-4 relative overflow-hidden">
              {/* Dark Background Effects */}
              <div className="absolute inset-0 z-0">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#0A382A] opacity-30 rounded-full blur-[120px]"></div>
             </div>
 
-            <div className="w-full max-w-md bg-[#0A382A] border border-white/5 rounded-3xl shadow-2xl overflow-hidden relative z-10 animate-fade-in">
-                <div className="p-8 text-center border-b border-white/5">
-                    <BrandLogo className="h-12 mx-auto mb-4 filter brightness-0 invert opacity-80" />
+            {/* WHITE CARD CONTAINER for Admin (High Contrast) */}
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10 animate-fade-in border border-gray-100">
+                <div className="p-8 text-center bg-[#0A382A] border-b border-[#0A382A]">
+                    <BrandLogo className="h-12 mx-auto mb-4 filter brightness-0 invert" />
                     <h2 className="text-xl font-serif font-bold text-white tracking-wide">Portal Master</h2>
-                    <p className="text-green-200/50 text-xs mt-2 uppercase tracking-widest font-bold">Acesso Restrito</p>
+                    <p className="text-green-200/70 text-xs mt-2 uppercase tracking-widest font-bold">Acesso Restrito</p>
                 </div>
                 
                 <form onSubmit={handleLogin} className="p-8 space-y-6">
                     {error && (
-                        <div className="p-3 bg-red-900/30 text-red-200 text-sm rounded-lg text-center border border-red-900/50">
+                        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center border border-red-100">
                             {error}
                         </div>
                     )}
                     
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-green-200/70 ml-1 uppercase">ID Master ou E-mail</label>
+                        {/* UPDATED LABEL: ID MASTER */}
+                        <label className="text-sm font-bold text-[#0A382A] ml-1 uppercase">ID MASTER</label>
                         <div className="relative">
-                            <LockClosedIcon className="absolute left-4 top-3.5 h-5 w-5 text-green-200/30" />
+                            <LockClosedIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                             <input 
                                 type="text" 
                                 required
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-white/10 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all bg-[#051F18]/50 text-white placeholder-green-200/20"
+                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-[#4CAF50] focus:ring-1 focus:ring-[#4CAF50] outline-none transition-all bg-gray-50 focus:bg-white text-gray-800 placeholder-gray-400"
                                 placeholder="Acesso Master"
                                 value={credential}
                                 onChange={(e) => setCredential(e.target.value)}
@@ -1164,13 +1221,13 @@ export const AdminLoginScreen = () => {
                     </div>
                     
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-green-200/70 ml-1 uppercase">Chave de Segurança</label>
+                        <label className="text-sm font-bold text-[#0A382A] ml-1 uppercase">Chave de Segurança</label>
                         <div className="relative">
-                            <ShieldCheckIcon className="absolute left-4 top-3.5 h-5 w-5 text-green-200/30" />
+                            <ShieldCheckIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                             <input 
                                 type="password" 
                                 required
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-white/10 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all bg-[#051F18]/50 text-white placeholder-green-200/20"
+                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-[#4CAF50] focus:ring-1 focus:ring-[#4CAF50] outline-none transition-all bg-gray-50 focus:bg-white text-gray-800 placeholder-gray-400"
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -1181,7 +1238,7 @@ export const AdminLoginScreen = () => {
                     <button 
                         type="submit" 
                         disabled={loading}
-                        className="w-full bg-[#4CAF50] hover:bg-[#43a047] text-[#051F18] font-bold py-4 rounded-xl shadow-lg shadow-green-900/40 transition-all transform hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-wider text-sm"
+                        className="w-full bg-[#4CAF50] hover:bg-[#43a047] text-white font-bold py-4 rounded-xl shadow-lg shadow-green-900/20 transition-all transform hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-wider text-sm"
                     >
                         {loading ? 'Autenticando...' : 'Iniciar Sessão Segura'}
                     </button>
@@ -1438,7 +1495,6 @@ export const BusinessView = () => (
                 <p className="text-4xl font-bold text-brand-green-dark mt-2">R$ 4.500</p>
             </div>
         </div>
-        <ConsultantRanking />
     </div>
 );
 
