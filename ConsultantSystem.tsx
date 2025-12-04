@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, useOutletContext, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
 import { 
     BrandLogo, 
@@ -32,26 +32,20 @@ import {
     WhatsAppIcon,
     LocationIcon,
     SearchIcon,
-    PlusIcon, 
+    PlusIcon,
     MinusIcon,
     EyeIcon,
     FilterIcon,
     LockClosedIcon,
     BriefcaseIcon,
-    PresentationChartLineIcon,
-    TargetIcon
+    PresentationChartLineIcon
 } from './components/Icons';
-import { Consultant, ConsultantStats, Sale, Notification, PrivateCustomer, PrivateSale, Material, Lesson, Order, Withdrawal, GoalMetrics } from './types';
+import { Consultant, ConsultantStats, Sale, Notification, PrivateCustomer, PrivateSale, Material, Lesson, Order } from './types';
 
 // --- Context Type for Outlet ---
 type DashboardContextType = {
     consultant: Consultant;
 };
-
-// --- Configurações de Metas (Poderiam vir do banco em uma versão futura) ---
-const GOAL_TARGET = 5000.00; // Meta mensal de vendas
-const GOAL_NEAR_PERCENT = 0.8; // 80%
-const BONUS_PERCENT = 0.10; // 10% de bônus
 
 // --- Helper Functions ---
 const formatCurrency = (value: number) => {
@@ -59,13 +53,6 @@ const formatCurrency = (value: number) => {
         style: 'currency',
         currency: 'BRL',
     }).format(value);
-};
-
-const parseCurrency = (valueStr: string): number => {
-    if (!valueStr) return 0;
-    // Remove "R$", espaços, pontos de milhar e troca vírgula por ponto
-    const cleanStr = valueStr.replace(/[R$\s.]/g, '').replace(',', '.');
-    return parseFloat(cleanStr) || 0;
 };
 
 // --- Centralized Mock Data ---
@@ -79,275 +66,9 @@ const MOCK_DATA = {
         { id: '102035', name: 'Marcos Rocha', role: 'Consultor', status: 'Inativo', sales: 'R$ 0,00', phone: '5511944444444' },
     ],
     financial: {
-        balance: 3450.00, // Saldo simulado disponível para saque
+        balance: 3450.00,
         pendingWithdrawals: 0
     }
-};
-
-// --- AUTH COMPONENTS ---
-
-export const LoginScreen = () => {
-    const navigate = useNavigate();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-
-        try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-
-            if (error) throw error;
-
-            if (data.session) {
-                navigate('/'); 
-            }
-        } catch (err: any) {
-            setError(err.message || "Falha no login");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 space-y-6">
-                <div className="text-center">
-                    <div className="flex justify-center mb-4">
-                        <BrandLogo className="h-16 w-auto" />
-                    </div>
-                    <h2 className="text-3xl font-serif font-bold text-brand-green-dark">Bem-vindo</h2>
-                    <p className="text-gray-500">Acesse sua conta para continuar.</p>
-                </div>
-
-                {error && (
-                    <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center">
-                        {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleLogin} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input 
-                            type="email" 
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-green-mid focus:border-transparent outline-none transition"
-                            placeholder="seu@email.com"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-                        <input 
-                            type="password" 
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-green-mid focus:border-transparent outline-none transition"
-                            placeholder="••••••••"
-                        />
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm">
-                        <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
-                            <input type="checkbox" className="rounded text-brand-green-mid focus:ring-brand-green-mid" />
-                            Lembrar-me
-                        </label>
-                        <a href="#" className="text-brand-green-dark font-bold hover:underline">Esqueceu a senha?</a>
-                    </div>
-
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        className="w-full py-3 bg-brand-green-dark text-white rounded-xl font-bold shadow-lg shadow-green-900/10 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {loading ? 'Entrando...' : 'Entrar'}
-                    </button>
-                </form>
-
-                <div className="text-center text-sm text-gray-500">
-                    Não tem uma conta? <Link to="/cadastro" className="text-brand-green-dark font-bold hover:underline">Cadastre-se</Link>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-export const ConsultantRegister = () => {
-    const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password: '',
-        whatsapp: '',
-        document_id: '',
-        sponsor_id: searchParams.get('indicante') || ''
-    });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleRegister = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-
-        try {
-            // 1. Sign Up
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-                email: formData.email,
-                password: formData.password,
-            });
-
-            if (authError) throw authError;
-
-            if (authData.user) {
-                // 2. Create Consultant Record
-                const newId = Math.floor(100000 + Math.random() * 900000).toString();
-
-                const { error: dbError } = await supabase.from('consultants').insert({
-                    id: newId,
-                    auth_id: authData.user.id,
-                    name: formData.name,
-                    email: formData.email,
-                    whatsapp: formData.whatsapp,
-                    document_id: formData.document_id,
-                    parent_id: formData.sponsor_id || null,
-                    role: 'consultant'
-                });
-
-                if (dbError) throw dbError;
-
-                alert("Cadastro realizado com sucesso!");
-                navigate('/login');
-            }
-        } catch (err: any) {
-            setError(err.message || "Erro ao realizar cadastro.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 space-y-6">
-                <div className="text-center">
-                     <div className="flex justify-center mb-4">
-                        <BrandLogo className="h-12 w-auto" />
-                    </div>
-                    <h2 className="text-2xl font-serif font-bold text-brand-green-dark">Seja um Consultor</h2>
-                    <p className="text-gray-500 text-sm">Junte-se ao Clube Brotos e transforme sua vida.</p>
-                </div>
-
-                {error && (
-                    <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center">
-                        {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleRegister} className="space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label>
-                        <input 
-                            name="name"
-                            type="text" 
-                            required
-                            value={formData.name}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-green-mid outline-none transition"
-                        />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">WhatsApp</label>
-                            <input 
-                                name="whatsapp"
-                                type="text" 
-                                required
-                                value={formData.whatsapp}
-                                onChange={handleChange}
-                                placeholder="(00) 00000-0000"
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-green-mid outline-none transition"
-                            />
-                        </div>
-                         <div>
-                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">CPF</label>
-                            <input 
-                                name="document_id"
-                                type="text" 
-                                value={formData.document_id}
-                                onChange={handleChange}
-                                placeholder="000.000.000-00"
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-green-mid outline-none transition"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
-                        <input 
-                            name="email"
-                            type="email" 
-                            required
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-green-mid outline-none transition"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Senha</label>
-                        <input 
-                            name="password"
-                            type="password" 
-                            required
-                            value={formData.password}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-green-mid outline-none transition"
-                        />
-                    </div>
-
-                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">ID do Indicante (Opcional)</label>
-                        <input 
-                            name="sponsor_id"
-                            type="text" 
-                            value={formData.sponsor_id}
-                            onChange={handleChange}
-                            placeholder="Ex: 001234"
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-green-mid outline-none transition bg-gray-50"
-                        />
-                    </div>
-
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        className="w-full py-3 bg-brand-green-dark text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-70 mt-4"
-                    >
-                        {loading ? 'Cadastrando...' : 'Finalizar Cadastro'}
-                    </button>
-                </form>
-
-                <div className="text-center text-sm text-gray-500">
-                    Já tem conta? <Link to="/login" className="text-brand-green-dark font-bold hover:underline">Fazer Login</Link>
-                </div>
-            </div>
-        </div>
-    );
 };
 
 // --- Shared Modals ---
@@ -968,52 +689,6 @@ export const BusinessView = () => {
 };
 
 export const FinancialView = () => {
-    const { consultant } = useOutletContext<DashboardContextType>();
-    const [balance, setBalance] = useState(MOCK_DATA.financial.balance); // Simulação de saldo
-    const [loading, setLoading] = useState(false);
-    const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-
-    useEffect(() => {
-        const fetchWithdrawals = async () => {
-            const { data } = await supabase
-                .from('withdrawals')
-                .select('*')
-                .eq('consultant_id', consultant.id)
-                .order('created_at', { ascending: false });
-            if (data) setWithdrawals(data as Withdrawal[]);
-        };
-        fetchWithdrawals();
-    }, [consultant.id]);
-
-    const handleRequestWithdrawal = async () => {
-        if (balance <= 0) return alert("Saldo insuficiente.");
-        
-        const confirm = window.confirm(`Confirmar solicitação de saque de ${formatCurrency(balance)}?`);
-        if (!confirm) return;
-
-        setLoading(true);
-        const { error } = await supabase.from('withdrawals').insert({
-            consultant_id: consultant.id,
-            amount: balance,
-            status: 'pending'
-        });
-
-        if (error) {
-            alert("Erro ao solicitar saque.");
-        } else {
-            alert("Saque solicitado com sucesso! Aguarde a aprovação.");
-            // Recarregar lista
-            const { data } = await supabase
-                .from('withdrawals')
-                .select('*')
-                .eq('consultant_id', consultant.id)
-                .order('created_at', { ascending: false });
-            if (data) setWithdrawals(data as Withdrawal[]);
-            setBalance(0); // Zera o saldo simulado
-        }
-        setLoading(false);
-    };
-
     return (
         <div className="space-y-8 animate-fade-in">
              <div className="bg-brand-dark-bg text-white rounded-[2rem] p-8 md:p-12 relative overflow-hidden">
@@ -1021,50 +696,44 @@ export const FinancialView = () => {
                     <div>
                         <p className="text-gray-400 font-bold uppercase tracking-widest mb-2">Saldo Disponível</p>
                         <h2 className="text-5xl font-serif font-bold text-brand-green-mid">
-                            {formatCurrency(balance)}
+                            {formatCurrency(MOCK_DATA.financial.balance)}
                         </h2>
                     </div>
-                    <button 
-                        onClick={handleRequestWithdrawal}
-                        disabled={loading || balance <= 0}
-                        className={`px-8 py-4 bg-white text-brand-dark-bg rounded-xl font-bold shadow-lg transition-all flex items-center gap-2 ${
-                            balance <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
-                        }`}
-                    >
+                    <button className="px-8 py-4 bg-white text-brand-dark-bg rounded-xl font-bold shadow-lg hover:bg-gray-100 transition-all flex items-center gap-2">
                         <BanknotesIcon className="h-6 w-6" />
-                        {loading ? 'Processando...' : 'Solicitar Saque'}
+                        Solicitar Saque
                     </button>
                 </div>
              </div>
 
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-bold text-gray-800 mb-6">Histórico de Saques</h3>
+                    <h3 className="text-lg font-bold text-gray-800 mb-6">Histórico de Transações</h3>
                     <div className="space-y-4">
-                        {withdrawals.length === 0 ? (
-                            <p className="text-gray-400 text-sm">Nenhuma solicitação encontrada.</p>
-                        ) : (
-                            withdrawals.map((w) => (
-                                <div key={w.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-2 rounded-lg ${
-                                            w.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                            w.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                            'bg-yellow-100 text-yellow-700'
-                                        }`}>
-                                            {w.status === 'approved' ? <CheckCircleIcon className="h-5 w-5" /> :
-                                             w.status === 'rejected' ? <CloseIcon className="h-5 w-5" /> :
-                                             <TrendingUpIcon className="h-5 w-5" />}
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-gray-800">Saque {w.status === 'pending' ? 'Pendente' : w.status === 'approved' ? 'Aprovado' : 'Rejeitado'}</p>
-                                            <p className="text-xs text-gray-500">{new Date(w.created_at).toLocaleDateString()}</p>
-                                        </div>
-                                    </div>
-                                    <span className="font-bold text-gray-800">{formatCurrency(w.amount)}</span>
+                        <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                            <div className="flex items-center gap-4">
+                                <div className="p-2 bg-green-100 text-green-700 rounded-lg">
+                                    <TrendingUpIcon className="h-5 w-5" />
                                 </div>
-                            ))
-                        )}
+                                <div>
+                                    <p className="font-bold text-gray-800">Comissão de Rede</p>
+                                    <p className="text-xs text-gray-500">24 Out 2023</p>
+                                </div>
+                            </div>
+                            <span className="font-bold text-green-600">+ R$ 150,00</span>
+                        </div>
+                         <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                            <div className="flex items-center gap-4">
+                                <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                                    <TrendingUpIcon className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-gray-800">Bônus de Liderança</p>
+                                    <p className="text-xs text-gray-500">20 Out 2023</p>
+                                </div>
+                            </div>
+                            <span className="font-bold text-blue-600">+ R$ 500,00</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1083,232 +752,7 @@ export const FinancialView = () => {
     );
 };
 
-// --- NOVAS VIEWS ADMINISTRATIVAS ---
-
-export const AdminGoalsView = () => {
-    const [metrics, setMetrics] = useState<GoalMetrics[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        // Função para calcular metas (simulada com dados reais de 'orders' e 'consultants')
-        const calculateGoals = async () => {
-            setLoading(true);
-            
-            // 1. Pegar todos os consultores
-            const { data: consultants } = await supabase.from('consultants').select('id, name');
-            if (!consultants) return;
-
-            // 2. Pegar pedidos do mês atual (Simulado pegando tudo para demonstração)
-            const { data: orders } = await supabase.from('orders').select('consultant_id, total, status');
-            
-            // 3. Processar dados
-            const results: GoalMetrics[] = consultants.map(consultant => {
-                // Filtrar pedidos deste consultor
-                const myOrders = orders?.filter(o => o.consultant_id === consultant.id) || [];
-                
-                // Somar total (convertendo string "R$ 1.000,00" para number)
-                const totalSales = myOrders.reduce((acc, order) => acc + parseCurrency(order.total), 0);
-                
-                const percentage = Math.min((totalSales / GOAL_TARGET) * 100, 100);
-                
-                let status: 'meta_batida' | 'proximo' | 'distante' = 'distante';
-                if (totalSales >= GOAL_TARGET) status = 'meta_batida';
-                else if (totalSales >= (GOAL_TARGET * GOAL_NEAR_PERCENT)) status = 'proximo';
-
-                // Bônus simples: 10% se bateu a meta
-                const bonus = totalSales >= GOAL_TARGET ? totalSales * BONUS_PERCENT : 0;
-
-                return {
-                    consultant_id: consultant.id,
-                    consultant_name: consultant.name,
-                    total_sales: totalSales,
-                    percentage,
-                    status,
-                    bonus_amount: bonus
-                };
-            });
-
-            // Ordenar por vendas (maior para menor)
-            results.sort((a, b) => b.total_sales - a.total_sales);
-
-            setMetrics(results);
-            setLoading(false);
-        };
-
-        calculateGoals();
-    }, []);
-
-    const totalLiability = metrics.reduce((acc, curr) => acc + curr.bonus_amount, 0);
-    const achievers = metrics.filter(m => m.status === 'meta_batida').length;
-
-    return (
-        <div className="space-y-8 animate-fade-in">
-            <div className="flex flex-col md:flex-row justify-between items-end gap-4">
-                <div>
-                    <h2 className="text-2xl font-serif font-bold text-gray-800">Painel de Metas</h2>
-                    <p className="text-gray-500">Acompanhamento de desempenho mensal dos distribuidores.</p>
-                </div>
-                <div className="flex gap-4">
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-right">
-                        <p className="text-xs font-bold text-gray-400 uppercase">Qualificados</p>
-                        <p className="text-2xl font-bold text-brand-green-dark">{achievers}</p>
-                    </div>
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-right">
-                        <p className="text-xs font-bold text-gray-400 uppercase">Bonificação Total</p>
-                        <p className="text-2xl font-bold text-gray-800">{formatCurrency(totalLiability)}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="p-4 text-sm font-bold text-gray-500">Consultor</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Vendas (Mês)</th>
-                            <th className="p-4 text-sm font-bold text-gray-500 w-1/3">Progresso da Meta ({formatCurrency(GOAL_TARGET)})</th>
-                            <th className="p-4 text-sm font-bold text-gray-500 text-right">Bônus Previsto</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                             <tr><td colSpan={4} className="p-8 text-center">Carregando métricas...</td></tr>
-                        ) : metrics.length === 0 ? (
-                            <tr><td colSpan={4} className="p-8 text-center">Nenhum dado encontrado.</td></tr>
-                        ) : (
-                            metrics.map((m) => (
-                                <tr key={m.consultant_id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                                    <td className="p-4">
-                                        <div className="font-bold text-gray-800">{m.consultant_name}</div>
-                                        <div className="text-xs text-gray-400">ID: {m.consultant_id}</div>
-                                    </td>
-                                    <td className="p-4 font-medium text-gray-700">{formatCurrency(m.total_sales)}</td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                                                <div 
-                                                    className={`h-2.5 rounded-full transition-all duration-500 ${
-                                                        m.status === 'meta_batida' ? 'bg-green-500' : 
-                                                        m.status === 'proximo' ? 'bg-yellow-400' : 'bg-gray-300'
-                                                    }`} 
-                                                    style={{ width: `${m.percentage}%` }}
-                                                ></div>
-                                            </div>
-                                            <span className="text-xs font-bold w-12 text-right">{m.percentage.toFixed(0)}%</span>
-                                        </div>
-                                        {m.status === 'meta_batida' && <span className="text-[10px] font-bold text-green-600 uppercase mt-1 inline-block">Meta Batida!</span>}
-                                    </td>
-                                    <td className={`p-4 text-right font-bold ${m.bonus_amount > 0 ? 'text-brand-green-mid' : 'text-gray-300'}`}>
-                                        {formatCurrency(m.bonus_amount)}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-};
-
-export const AdminWithdrawalsView = () => {
-    const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    const fetchWithdrawals = async () => {
-        setLoading(true);
-        // Busca saques pendentes e faz join com consultores para pegar o nome
-        const { data, error } = await supabase
-            .from('withdrawals')
-            .select(`
-                *,
-                consultants (name, email)
-            `)
-            .eq('status', 'pending')
-            .order('created_at', { ascending: true });
-        
-        if (data) setWithdrawals(data as any); // Cast devido ao Join
-        setLoading(false);
-    };
-
-    useEffect(() => {
-        fetchWithdrawals();
-    }, []);
-
-    const handleAction = async (id: string, action: 'approved' | 'rejected') => {
-        const confirm = window.confirm(`Deseja ${action === 'approved' ? 'APROVAR' : 'REJEITAR'} este saque?`);
-        if (!confirm) return;
-
-        const { error } = await supabase
-            .from('withdrawals')
-            .update({ status: action, processed_at: new Date().toISOString() })
-            .eq('id', id);
-
-        if (!error) {
-            alert("Status atualizado com sucesso.");
-            fetchWithdrawals();
-        } else {
-            alert("Erro ao atualizar.");
-        }
-    };
-
-    return (
-        <div className="space-y-8 animate-fade-in">
-             <div>
-                <h2 className="text-2xl font-serif font-bold text-gray-800">Solicitações de Saque</h2>
-                <p className="text-gray-500">Gerencie os pedidos de retirada de bonificações.</p>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="p-4 text-sm font-bold text-gray-500">Solicitante</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Data</th>
-                            <th className="p-4 text-sm font-bold text-gray-500">Valor</th>
-                            <th className="p-4 text-sm font-bold text-gray-500 text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                             <tr><td colSpan={4} className="p-8 text-center">Carregando...</td></tr>
-                        ) : withdrawals.length === 0 ? (
-                            <tr><td colSpan={4} className="p-8 text-center text-gray-500">Nenhuma solicitação pendente no momento.</td></tr>
-                        ) : (
-                            withdrawals.map((w) => (
-                                <tr key={w.id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                                    <td className="p-4">
-                                        <div className="font-bold text-gray-800">{w.consultants?.name || 'Desconhecido'}</div>
-                                        <div className="text-xs text-gray-400">{w.consultants?.email}</div>
-                                    </td>
-                                    <td className="p-4 text-gray-600">{new Date(w.created_at).toLocaleDateString()}</td>
-                                    <td className="p-4 font-bold text-gray-800">{formatCurrency(w.amount)}</td>
-                                    <td className="p-4 flex justify-end gap-2">
-                                        <button 
-                                            onClick={() => handleAction(w.id, 'rejected')}
-                                            className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-bold transition"
-                                        >
-                                            Rejeitar
-                                        </button>
-                                        <button 
-                                            onClick={() => handleAction(w.id, 'approved')}
-                                            className="px-4 py-2 bg-green-500 text-white hover:bg-green-600 rounded-lg text-xs font-bold transition shadow-md shadow-green-100"
-                                        >
-                                            Autorizar Saque
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-};
-
 export const AdminPanelView = () => {
-    // ... mantido o código anterior ...
     return (
         <div className="space-y-8 animate-fade-in">
              <div className="bg-gradient-to-br from-brand-dark-bg to-brand-dark-card text-white rounded-[2rem] p-8 shadow-xl">
@@ -1332,21 +776,17 @@ export const AdminPanelView = () => {
              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                  <h3 className="text-xl font-bold text-gray-800 mb-4">Ações Rápidas</h3>
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                     <Link to="/admin/painel-metas" className="p-4 rounded-xl border border-gray-200 hover:border-brand-green-mid hover:bg-green-50 transition flex flex-col items-center gap-2 text-center group">
-                         <TargetIcon className="h-6 w-6 text-brand-green-dark group-hover:scale-110 transition-transform" />
-                         <span className="font-bold text-gray-700 text-sm">Metas & Bônus</span>
-                     </Link>
-                      <Link to="/admin/solicitacoes-saque" className="p-4 rounded-xl border border-gray-200 hover:border-brand-green-mid hover:bg-green-50 transition flex flex-col items-center gap-2 text-center group">
-                         <BanknotesIcon className="h-6 w-6 text-brand-green-dark group-hover:scale-110 transition-transform" />
-                         <span className="font-bold text-gray-700 text-sm">Solicitações de Saque</span>
-                     </Link>
-                      <button className="p-4 rounded-xl border border-gray-200 hover:border-brand-green-mid hover:bg-green-50 transition flex flex-col items-center gap-2 text-center">
-                         <SparklesIcon className="h-6 w-6 text-brand-green-dark" />
-                         <span className="font-bold text-gray-700 text-sm">Config. Sistema</span>
-                     </button>
                      <button className="p-4 rounded-xl border border-gray-200 hover:border-brand-green-mid hover:bg-green-50 transition flex flex-col items-center gap-2 text-center">
                          <UserPlusIcon className="h-6 w-6 text-brand-green-dark" />
                          <span className="font-bold text-gray-700 text-sm">Aprovar Cadastros</span>
+                     </button>
+                      <button className="p-4 rounded-xl border border-gray-200 hover:border-brand-green-mid hover:bg-green-50 transition flex flex-col items-center gap-2 text-center">
+                         <PackageIcon className="h-6 w-6 text-brand-green-dark" />
+                         <span className="font-bold text-gray-700 text-sm">Gerenciar Estoque</span>
+                     </button>
+                      <button className="p-4 rounded-xl border border-gray-200 hover:border-brand-green-mid hover:bg-green-50 transition flex flex-col items-center gap-2 text-center">
+                         <SparklesIcon className="h-6 w-6 text-brand-green-dark" />
+                         <span className="font-bold text-gray-700 text-sm">Config. Sistema</span>
                      </button>
                  </div>
              </div>
@@ -1495,18 +935,6 @@ export const DashboardShell = ({ consultant, children }: { consultant: Consultan
                                 to={`${basePath}/administracao`}
                                 active={isActive('/administracao')} 
                             />
-                            <SidebarItem 
-                                icon={TargetIcon} 
-                                label="Painel de Metas" 
-                                to={`${basePath}/painel-metas`}
-                                active={isActive('/painel-metas')} 
-                            />
-                            <SidebarItem 
-                                icon={BanknotesIcon} 
-                                label="Solicitações Saque" 
-                                to={`${basePath}/solicitacoes-saque`}
-                                active={isActive('/solicitacoes-saque')} 
-                            />
                         </>
                     )}
                 </div>
@@ -1546,6 +974,304 @@ export const DashboardShell = ({ consultant, children }: { consultant: Consultan
                     {children}
                 </div>
             </main>
+        </div>
+    );
+};
+
+// --- AUTH SCREENS ---
+
+export const LoginScreen = () => {
+    const [credential, setCredential] = useState(''); // Unified credential (email or ID)
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            let emailToAuth = credential;
+            let isEmail = credential.includes('@');
+
+            // --- 1. MAGIC ADMIN CHECK (Fallback for Setup) ---
+            if (credential === '000000' && password === 'jo1234') {
+                const adminEmail = 'admin@brotos.com';
+                
+                // Try direct login
+                const { data: loginData } = await supabase.auth.signInWithPassword({
+                    email: adminEmail,
+                    password: password
+                });
+
+                if (loginData.session) {
+                     navigate('/admin/dashboard');
+                     return;
+                }
+
+                // If fails, try to create (first time)
+                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                    email: adminEmail,
+                    password: password
+                });
+
+                if (signUpError) throw new Error('Falha ao criar admin automático.');
+
+                if (signUpData.user) {
+                     const { error: profileError } = await supabase.from('consultants').upsert({
+                         id: '000000',
+                         auth_id: signUpData.user.id,
+                         name: 'Administrador Geral',
+                         email: adminEmail,
+                         role: 'admin',
+                         whatsapp: '',
+                         created_at: new Date().toISOString()
+                     });
+
+                     if (profileError) throw profileError;
+                     navigate('/admin/dashboard');
+                     return;
+                }
+            }
+
+            // --- 2. ID LOOKUP (If not email) ---
+            if (!isEmail) {
+                const { data: profiles, error: profileLookupError } = await supabase
+                    .from('consultants')
+                    .select('email, role')
+                    .eq('id', credential)
+                    .maybeSingle();
+
+                if (profileLookupError) {
+                    throw new Error('Erro ao buscar ID. Verifique a conexão.');
+                }
+                
+                if (!profiles) {
+                    throw new Error('ID não encontrado.');
+                }
+                
+                emailToAuth = profiles.email;
+            }
+
+            // --- 3. STANDARD SUPABASE AUTH ---
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
+                email: emailToAuth,
+                password
+            });
+
+            if (authError) throw authError;
+
+            // Redirect based on role
+            if (data.user) {
+                // Fetch fresh profile to be sure of role
+                const { data: profile } = await supabase
+                    .from('consultants')
+                    .select('role')
+                    .eq('auth_id', data.user.id)
+                    .single();
+
+                if (profile?.role === 'admin') {
+                    navigate('/admin/dashboard');
+                } else {
+                    navigate('/consultor/dashboard');
+                }
+            }
+        } catch (err: any) {
+            setError(err.message || 'Erro ao entrar. Verifique suas credenciais.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-brand-dark-bg flex flex-col items-center justify-center p-4 relative overflow-hidden">
+             {/* Background Effects */}
+             <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-green-dark opacity-20 blur-[100px] rounded-full animate-float"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-earth opacity-10 blur-[100px] rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
+            </div>
+
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10 animate-slide-up">
+                <div className="p-8 text-center bg-gray-50 border-b border-gray-100">
+                    <BrandLogo className="h-16 mx-auto mb-4" />
+                    <h2 className="text-2xl font-serif font-bold text-gray-800">Bem-vindo ao Clube</h2>
+                    <p className="text-gray-500 text-sm mt-2">Faça login para gerenciar seu negócio.</p>
+                </div>
+                
+                <form onSubmit={handleLogin} className="p-8 space-y-6">
+                    {error && (
+                        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center border border-red-100">
+                            {error}
+                        </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-700 ml-1">Usuário (E-mail ou ID)</label>
+                        <input 
+                            type="text" 
+                            required
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-green-mid focus:ring-2 focus:ring-brand-green-light outline-none transition-all bg-gray-50 focus:bg-white"
+                            placeholder="Digite seu ID ou E-mail"
+                            value={credential}
+                            onChange={(e) => setCredential(e.target.value)}
+                        />
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-700 ml-1">Senha</label>
+                        <input 
+                            type="password" 
+                            required
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-green-mid focus:ring-2 focus:ring-brand-green-light outline-none transition-all bg-gray-50 focus:bg-white"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        disabled={loading}
+                        className="w-full bg-brand-green-dark hover:bg-brand-green-mid text-white font-bold py-4 rounded-xl shadow-lg shadow-green-900/10 transition-all transform hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                        {loading ? 'Entrando...' : 'Acessar Painel'}
+                    </button>
+
+                    <div className="text-center pt-4 border-t border-gray-50">
+                        <p className="text-gray-500 text-sm">Ainda não faz parte?</p>
+                        <Link to="/cadastro" className="text-brand-green-dark font-bold hover:underline">
+                            Torne-se um Consultor
+                        </Link>
+                    </div>
+                </form>
+            </div>
+            <p className="mt-8 text-gray-500 text-sm relative z-10">© 2024 Brotos da Terra. Todos os direitos reservados.</p>
+        </div>
+    );
+};
+
+export const ConsultantRegister = () => {
+    const [step, setStep] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '', email: '', password: '', phone: '', document: '', address: '', city: '', state: ''
+    });
+    const navigate = useNavigate();
+
+    // Generate random ID (simulated)
+    const generateId = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+    const handleRegister = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            // 1. Sign Up in Supabase Auth
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+            });
+
+            if (authError) throw authError;
+
+            if (authData.user) {
+                // 2. Create Profile in 'consultants' table
+                // Uses the RLS policy "Users can insert their own profile"
+                const newId = generateId();
+                const { error: dbError } = await supabase.from('consultants').insert({
+                    id: newId,
+                    auth_id: authData.user.id,
+                    name: formData.name,
+                    email: formData.email,
+                    whatsapp: formData.phone,
+                    document_id: formData.document,
+                    address: formData.address,
+                    city: formData.city,
+                    state: formData.state,
+                    role: 'consultant',
+                    parent_id: '007053' // Default sponsor
+                });
+
+                if (dbError) throw dbError;
+
+                alert("Cadastro realizado com sucesso! Faça login para continuar.");
+                navigate('/login');
+            }
+
+        } catch (error: any) {
+            alert("Erro no cadastro: " + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl overflow-hidden animate-slide-up">
+                <div className="bg-brand-green-dark p-8 text-white text-center">
+                    <BrandLogo className="h-12 mx-auto mb-4 filter brightness-0 invert" />
+                    <h2 className="text-2xl font-serif font-bold">Ficha de Cadastro</h2>
+                    <p className="opacity-80 text-sm">Junte-se a nós e comece a lucrar hoje.</p>
+                </div>
+
+                <form onSubmit={handleRegister} className="p-8">
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-700">Nome Completo</label>
+                                <input type="text" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
+                                    value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                            </div>
+                             <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-700">CPF</label>
+                                <input type="text" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
+                                    value={formData.document} onChange={e => setFormData({...formData, document: e.target.value})} />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-700">E-mail</label>
+                                <input type="email" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
+                                    value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                            </div>
+                             <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-700">WhatsApp</label>
+                                <input type="tel" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
+                                    value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                            </div>
+                        </div>
+
+                         <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">Endereço Completo</label>
+                            <input type="text" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
+                                value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">Senha de Acesso</label>
+                            <input type="password" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
+                                value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                        </div>
+
+                        <button 
+                            type="submit" 
+                            disabled={loading}
+                            className="w-full bg-brand-green-mid hover:bg-brand-green-dark text-white font-bold py-4 rounded-xl shadow-lg transition-all"
+                        >
+                            {loading ? 'Cadastrando...' : 'Finalizar Cadastro'}
+                        </button>
+                    </div>
+                    
+                    <div className="text-center mt-6">
+                        <Link to="/login" className="text-brand-green-dark font-bold text-sm hover:underline">
+                            Já tenho uma conta
+                        </Link>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };
