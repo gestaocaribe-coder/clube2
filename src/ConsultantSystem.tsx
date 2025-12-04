@@ -50,7 +50,7 @@ import {
 import { Consultant, Order, Sale, Material, Lesson, Withdrawal, GoalMetric } from './types';
 
 // --- Version Marker for Git ---
-// v1.2.0 - Admin Sidebar Content Update
+// v1.3.0 - Activated Product Catalog
 
 // --- Context Type for Outlet ---
 type DashboardContextType = {
@@ -1370,19 +1370,111 @@ export const MyOrdersView = () => (
     </div>
 );
 
-export const NewOrderView = () => (
-     <div className="animate-fade-in">
-        <h1 className="text-3xl font-serif font-bold text-gray-900 mb-6">Fazer Pedido</h1>
-        <div className="bg-white rounded-2xl p-8 border border-gray-100 text-center">
-             <ShoppingCartIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-             <h2 className="text-xl font-bold text-gray-900 mb-2">Catálogo de Produtos</h2>
-             <p className="text-gray-500 mb-6">Selecione os produtos para revenda.</p>
-             <button className="bg-brand-green-mid text-white px-8 py-3 rounded-xl font-bold hover:bg-brand-green-dark transition-colors">
-                 Ver Catálogo
-             </button>
+export const NewOrderView = () => {
+    const PRODUCTS = [
+        { id: 1, name: 'Pomada Canela de Velho', description: 'Display com 12 unidades', price: 210.00, image: 'https://i.imgur.com/yNKoBxr.png' },
+        { id: 2, name: 'Pomada Sucupira', description: 'Display com 12 unidades', price: 210.00, image: 'https://i.imgur.com/yNKoBxr.png' }, // Placeholder image
+        { id: 3, name: 'Kit Misto', description: '6 Canela + 6 Sucupira', price: 220.00, image: 'https://i.imgur.com/yNKoBxr.png' } // Placeholder
+    ];
+
+    const [cart, setCart] = useState<Record<number, number>>({});
+
+    const updateQuantity = (id: number, delta: number) => {
+        setCart(prev => {
+            const current = prev[id] || 0;
+            const next = Math.max(0, current + delta);
+            if (next === 0) {
+                const { [id]: _, ...rest } = prev;
+                return rest;
+            }
+            return { ...prev, [id]: next };
+        });
+    };
+
+    const totalAmount = Object.entries(cart).reduce((sum, [id, qty]) => {
+        const product = PRODUCTS.find(p => p.id === Number(id));
+        return sum + (product ? product.price * qty : 0);
+    }, 0);
+
+    const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+
+    const handleCheckout = () => {
+        const message = "Olá! Gostaria de finalizar o seguinte pedido:\n\n" + 
+            Object.entries(cart).map(([id, qty]) => {
+                const p = PRODUCTS.find(p => p.id === Number(id));
+                return `${qty}x ${p?.name}`;
+            }).join('\n') + 
+            `\n\nTotal: ${formatCurrency(totalAmount)}`;
+            
+        const encoded = encodeURIComponent(message);
+        window.open(`https://wa.me/557199190515?text=${encoded}`, '_blank');
+    };
+
+    return (
+        <div className="animate-fade-in pb-20">
+            <h1 className="text-3xl font-serif font-bold text-gray-900 mb-6">Fazer Pedido</h1>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {PRODUCTS.map(product => (
+                    <div key={product.id} className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col">
+                        <div className="h-48 bg-gray-50 flex items-center justify-center p-6">
+                            <img src={product.image} alt={product.name} className="max-h-full max-w-full object-contain mix-blend-multiply" />
+                        </div>
+                        <div className="p-6 flex-1 flex flex-col">
+                            <h3 className="font-bold text-lg text-gray-900 mb-1">{product.name}</h3>
+                            <p className="text-sm text-gray-500 mb-4">{product.description}</p>
+                            
+                            <div className="mt-auto flex items-center justify-between">
+                                <span className="text-xl font-bold text-brand-green-dark">{formatCurrency(product.price)}</span>
+                                <div className="flex items-center gap-3 bg-gray-100 rounded-xl p-1">
+                                    <button 
+                                        onClick={() => updateQuantity(product.id, -1)}
+                                        className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-gray-600 hover:text-red-500 disabled:opacity-50"
+                                        disabled={!cart[product.id]}
+                                    >
+                                        <MinusIcon className="h-4 w-4" />
+                                    </button>
+                                    <span className="font-bold w-6 text-center">{cart[product.id] || 0}</span>
+                                    <button 
+                                        onClick={() => updateQuantity(product.id, 1)}
+                                        className="w-8 h-8 flex items-center justify-center bg-brand-green-mid text-white rounded-lg shadow-sm hover:bg-brand-green-dark"
+                                    >
+                                        <PlusIcon className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Sticky Cart Summary */}
+            {totalItems > 0 && (
+                <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 md:translate-x-0 md:left-auto md:right-8 w-[90%] md:w-auto z-40">
+                    <div className="bg-brand-green-dark text-white p-4 rounded-2xl shadow-2xl flex items-center gap-6 animate-slide-up">
+                        <div className="flex items-center gap-4 pl-2">
+                            <div className="bg-white/10 p-3 rounded-xl">
+                                <ShoppingCartIcon className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-white/60 font-bold uppercase tracking-wider">{totalItems} itens</p>
+                                <p className="text-xl font-bold">{formatCurrency(totalAmount)}</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={handleCheckout}
+                            className="bg-brand-green-mid hover:bg-white hover:text-brand-green-dark text-white px-6 py-3 rounded-xl font-bold transition-colors flex items-center gap-2"
+                        >
+                            <WhatsAppIcon className="h-5 w-5" />
+                            <span className="hidden sm:inline">Finalizar no WhatsApp</span>
+                            <span className="sm:hidden">Finalizar</span>
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
-    </div>
-);
+    );
+};
 
 export const InviteView = () => (
     <div className="animate-fade-in max-w-2xl mx-auto text-center pt-10">
