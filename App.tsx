@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
@@ -21,7 +22,8 @@ import {
     AdminWithdrawalsView,
     AdminReportsView,
     AdminSupportView,
-    AdminSettingsView
+    AdminSettingsView,
+    AdminThemeProvider // Import Provider
 } from './ConsultantSystem';
 
 // --- Auth Guard Component ---
@@ -109,61 +111,63 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
 
 export default function App() {
   return (
-    <HashRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<LoginScreen />} />
-        <Route path="/cadastro" element={<ConsultantRegister />} />
-        
-        {/* SECURE ADMIN LOGIN ROUTE */}
-        <Route path="/portal-master" element={<AdminLoginScreen />} />
-
-        {/* Admin Routes (New Structure) */}
-        <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']} />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
+    <AdminThemeProvider>
+        <HashRouter>
+        <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<LoginScreen />} />
+            <Route path="/cadastro" element={<ConsultantRegister />} />
             
-            {/* GERENCIAMENTO CENTRAL */}
-            <Route path="dashboard" element={<AdminOverviewView />} />
-            <Route path="negocio" element={<BusinessView />} />
-            <Route path="usuarios" element={<AdminPanelView />} />
-            
-            {/* RELATÓRIOS E FINANÇAS */}
-            <Route path="financeiro" element={<FinancialView />} />
-            <Route path="relatorios" element={<AdminReportsView />} />
-            
-            {/* SISTEMA E SUPORTE */}
-            <Route path="suporte" element={<AdminSupportView />} />
-            <Route path="config" element={<AdminSettingsView />} />
+            {/* SECURE ADMIN LOGIN ROUTE */}
+            <Route path="/portal-master" element={<AdminLoginScreen />} />
 
-            {/* Legacy/Specific Routes kept for specific logic if needed, but removed from sidebar */}
-            <Route path="metas" element={<AdminGoalsView />} />
-            <Route path="saques" element={<AdminWithdrawalsView />} />
-            
-            {/* Operational routes accessible by URL but hidden from menu */}
-            <Route path="materiais" element={<MaterialsView />} />
-            <Route path="unibrotos" element={<UniBrotosView />} />
-            <Route path="meus-pedidos" element={<MyOrdersView />} />
-            <Route path="novo-pedido" element={<NewOrderView />} />
-            <Route path="convidar" element={<InviteView />} />
-        </Route>
+            {/* Admin Routes (New Structure) */}
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']} />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                
+                {/* GERENCIAMENTO CENTRAL */}
+                <Route path="dashboard" element={<AdminOverviewView />} />
+                <Route path="negocio" element={<BusinessView />} />
+                <Route path="usuarios" element={<AdminPanelView />} />
+                
+                {/* RELATÓRIOS E FINANÇAS */}
+                <Route path="financeiro" element={<FinancialView />} />
+                <Route path="relatorios" element={<AdminReportsView />} />
+                
+                {/* SISTEMA E SUPORTE */}
+                <Route path="suporte" element={<AdminSupportView />} />
+                <Route path="config" element={<AdminSettingsView />} />
 
-        {/* Consultant Routes */}
-        <Route path="/consultor" element={<ProtectedRoute allowedRoles={['consultant', 'leader']} />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<OverviewView />} />
-            <Route path="materiais" element={<MaterialsView />} />
-            <Route path="unibrotos" element={<UniBrotosView />} />
-            <Route path="meus-pedidos" element={<MyOrdersView />} />
-            <Route path="novo-pedido" element={<NewOrderView />} />
-            <Route path="convidar" element={<InviteView />} />
-            <Route path="meu-negocio" element={<BusinessView />} />
-            <Route path="financeiro" element={<FinancialView />} />
-        </Route>
+                {/* Legacy/Specific Routes kept for specific logic if needed, but removed from sidebar */}
+                <Route path="metas" element={<AdminGoalsView />} />
+                <Route path="saques" element={<AdminWithdrawalsView />} />
+                
+                {/* Operational routes accessible by URL but hidden from menu */}
+                <Route path="materiais" element={<MaterialsView />} />
+                <Route path="unibrotos" element={<UniBrotosView />} />
+                <Route path="meus-pedidos" element={<MyOrdersView />} />
+                <Route path="novo-pedido" element={<NewOrderView />} />
+                <Route path="convidar" element={<InviteView />} />
+            </Route>
 
-        {/* Catch All */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </HashRouter>
+            {/* Consultant Routes */}
+            <Route path="/consultor" element={<ProtectedRoute allowedRoles={['consultant', 'leader']} />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<OverviewView />} />
+                <Route path="materiais" element={<MaterialsView />} />
+                <Route path="unibrotos" element={<UniBrotosView />} />
+                <Route path="meus-pedidos" element={<MyOrdersView />} />
+                <Route path="novo-pedido" element={<NewOrderView />} />
+                <Route path="convidar" element={<InviteView />} />
+                <Route path="meu-negocio" element={<BusinessView />} />
+                <Route path="financeiro" element={<FinancialView />} />
+            </Route>
+
+            {/* Catch All */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+        </HashRouter>
+    </AdminThemeProvider>
   );
 }
