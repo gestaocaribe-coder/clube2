@@ -71,15 +71,15 @@ const parseCurrency = (valueStr: string): number => {
 // --- Centralized Mock Data ---
 const MOCK_DATA = {
     team: [
-        { id: '007053', name: 'Cleide Maia', role: 'Consultor', status: 'Ativo', sales: 'R$ 1.250,00', phone: '5511999999999' },
-        { id: '102031', name: 'João Santos', role: 'Consultor', status: 'Ativo', sales: 'R$ 1.200,00', phone: '5511988888888' },
+        { id: '007053', name: 'Cleide Maia', role: 'Consultor', status: 'Ativo', sales: 'R$ 0,00', phone: '5511999999999' },
+        { id: '102031', name: 'João Santos', role: 'Consultor', status: 'Ativo', sales: 'R$ 0,00', phone: '5511988888888' },
         { id: '102032', name: 'Ana Costa', role: 'Consultor', status: 'Inativo', sales: 'R$ 0,00', phone: '5511977777777' },
-        { id: '102033', name: 'Pedro Alves', role: 'Líder', status: 'Ativo', sales: 'R$ 3.450,00', phone: '5511966666666' },
-        { id: '102034', name: 'Carla Lima', role: 'Consultor', status: 'Ativo', sales: 'R$ 525,00', phone: '5511955555555' },
+        { id: '102033', name: 'Pedro Alves', role: 'Líder', status: 'Ativo', sales: 'R$ 0,00', phone: '5511966666666' },
+        { id: '102034', name: 'Carla Lima', role: 'Consultor', status: 'Ativo', sales: 'R$ 0,00', phone: '5511955555555' },
         { id: '102035', name: 'Marcos Rocha', role: 'Consultor', status: 'Inativo', sales: 'R$ 0,00', phone: '5511944444444' },
     ],
     financial: {
-        balance: 3450.00, // Saldo simulado disponível para saque
+        balance: 0.00, // Saldo inicial zerado
         pendingWithdrawals: 0
     }
 };
@@ -449,12 +449,8 @@ export const OverviewView = () => {
     const [recentSales, setRecentSales] = useState<Sale[]>([]);
 
     useEffect(() => {
-        // Mock fetch recent sales
-        const mockSales = [
-            { id: 101, consultant_id: consultant.id, quantity: 2, total_amount: 420.00, created_at: '2023-10-25' },
-            { id: 102, consultant_id: consultant.id, quantity: 1, total_amount: 210.00, created_at: '2023-10-20' },
-        ];
-        setRecentSales(mockSales);
+        // Inicializar com lista vazia para visual de "novo consultor"
+        setRecentSales([]);
     }, [consultant.id]);
 
     return (
@@ -491,8 +487,8 @@ export const OverviewView = () => {
                         </div>
                         <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Vendas no Mês</p>
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-800">R$ 1.250,00</h3>
-                    <p className="text-xs text-green-600 font-bold mt-2 bg-green-50 inline-block px-2 py-1 rounded">+15% vs mês anterior</p>
+                    <h3 className="text-3xl font-bold text-gray-800">R$ 0,00</h3>
+                    <p className="text-xs text-gray-400 mt-2 font-medium bg-gray-50 inline-block px-2 py-1 rounded">Sem vendas este mês</p>
                 </div>
                 
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
@@ -513,8 +509,8 @@ export const OverviewView = () => {
                         </div>
                         <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Novos Clientes</p>
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-800">12</h3>
-                    <p className="text-xs text-purple-600 font-bold mt-2 bg-purple-50 inline-block px-2 py-1 rounded">+4 essa semana</p>
+                    <h3 className="text-3xl font-bold text-gray-800">0</h3>
+                    <p className="text-xs text-purple-600 font-bold mt-2 bg-purple-50 inline-block px-2 py-1 rounded">Comece a divulgar!</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
@@ -524,9 +520,9 @@ export const OverviewView = () => {
                         </div>
                         <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Aulas Assistidas</p>
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-800">8/12</h3>
+                    <h3 className="text-3xl font-bold text-gray-800">0/12</h3>
                     <div className="w-full bg-gray-100 rounded-full h-1.5 mt-3">
-                        <div className="bg-orange-400 h-1.5 rounded-full" style={{ width: '66%' }}></div>
+                        <div className="bg-orange-400 h-1.5 rounded-full" style={{ width: '0%' }}></div>
                     </div>
                 </div>
             </div>
