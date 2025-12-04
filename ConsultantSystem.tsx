@@ -38,9 +38,14 @@ import {
     FilterIcon,
     LockClosedIcon,
     BriefcaseIcon,
-    PresentationChartLineIcon
+    PresentationChartLineIcon,
+    StoreIcon,
+    UserCircleIcon,
+    TargetIcon,
+    HandshakeIcon,
+    BellIcon
 } from './components/Icons';
-import { Consultant, ConsultantStats, Sale, Notification, PrivateCustomer, PrivateSale, Material, Lesson, Order } from './types';
+import { Consultant, ConsultantStats, Sale, Notification, PrivateCustomer, PrivateSale, Material, Lesson, Order, Withdrawal, GoalMetric } from './types';
 
 // --- Context Type for Outlet ---
 type DashboardContextType = {
@@ -55,7 +60,7 @@ const formatCurrency = (value: number) => {
     }).format(value);
 };
 
-// --- Centralized Mock Data ---
+// Use MOCK_DATA for demo, but fetch real data in production logic
 const MOCK_DATA = {
     team: [
         { id: '007053', name: 'Cleide Maia', role: 'Consultor', status: 'Ativo', sales: 'R$ 1.250,00', phone: '5511999999999' },
@@ -163,6 +168,135 @@ const OrderDetailsModal = ({ order, onClose }: { order: Order, onClose: () => vo
     );
 };
 
+// --- NEW COMPONENT: EarningsSimulator (Premium) ---
+
+const EarningsSimulator = () => {
+    // State for the slider
+    const [monthlyGoal, setMonthlyGoal] = useState<number>(3000);
+    
+    // Constants
+    const PROFIT_PER_UNIT = 17.50;
+    const WORKING_DAYS = 30;
+
+    // Calculation Logic
+    const unitsPerDay = Math.ceil(monthlyGoal / (PROFIT_PER_UNIT * WORKING_DAYS));
+    const exactMonthlyProfit = unitsPerDay * PROFIT_PER_UNIT * WORKING_DAYS;
+    
+    // Format helper
+    const fmt = (val: number) => val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    return (
+        <div className="bg-[#0A382A] rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-green-900/30">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 border-b border-white/10 pb-8 relative z-10">
+                <div className="flex items-center gap-4">
+                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10 shadow-inner">
+                        <CalculatorIcon className="h-8 w-8 text-[#4CAF50]" />
+                     </div>
+                     <div>
+                         <h3 className="text-2xl md:text-3xl font-serif font-bold tracking-tight">Simulador de Ganhos</h3>
+                         <p className="text-green-100/60 text-sm mt-1">Planeje seu futuro. Defina sua meta.</p>
+                     </div>
+                </div>
+                <div className="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-xs font-bold uppercase tracking-wider text-green-200/80">
+                    Lucro Unitário: R$ {fmt(PROFIT_PER_UNIT)}
+                </div>
+            </div>
+
+            {/* Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+                
+                {/* Left: Quick Scenarios (Cards) */}
+                <div className="lg:col-span-4 flex flex-col gap-4">
+                    <p className="text-xs font-bold uppercase tracking-widest text-green-200/50 mb-2 pl-1">Cenários Rápidos</p>
+                    {[2, 5, 10].map((units) => {
+                        const profit = units * PROFIT_PER_UNIT * WORKING_DAYS;
+                        const isHigh = units === 10;
+                        return (
+                            <div 
+                                key={units}
+                                onClick={() => setMonthlyGoal(profit)}
+                                className={`cursor-pointer group relative p-5 rounded-2xl border transition-all duration-300 ${
+                                    isHigh 
+                                    ? 'bg-gradient-to-r from-[#144d3b] to-[#0A382A] border-[#4CAF50]/50 shadow-lg' 
+                                    : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
+                                }`}
+                            >
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isHigh ? 'bg-[#4CAF50] text-white' : 'bg-white/10 text-gray-300'}`}>
+                                            {units}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-white">Vender {units} un/dia</p>
+                                            <p className="text-xs text-green-200/60">Meta alcançável</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`text-lg font-bold ${isHigh ? 'text-[#4CAF50]' : 'text-white'}`}>R$ {fmt(profit)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Right: Interactive Slider & Main Result */}
+                <div className="lg:col-span-8 bg-white/5 backdrop-blur-md rounded-[2rem] border border-white/5 p-8 flex flex-col justify-between relative overflow-hidden">
+                    {/* Background Glow */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#4CAF50] opacity-10 blur-[80px] rounded-full pointer-events-none"></div>
+
+                    <div className="relative z-10 text-center mb-8">
+                        <p className="text-green-200/70 font-medium mb-2">Quanto você quer ganhar este mês?</p>
+                        <div className="flex items-baseline justify-center gap-2">
+                             <span className="text-2xl text-green-200/50 font-serif">R$</span>
+                             <span className="text-6xl md:text-7xl font-bold text-white tracking-tighter transition-all duration-200">
+                                 {fmt(monthlyGoal)}
+                             </span>
+                        </div>
+                    </div>
+
+                    {/* Slider Component */}
+                    <div className="relative z-10 w-full px-4 mb-8">
+                        <input 
+                            type="range" 
+                            min="500" 
+                            max="10000" 
+                            step="100"
+                            value={monthlyGoal}
+                            onChange={(e) => setMonthlyGoal(Number(e.target.value))}
+                            className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#4CAF50] hover:accent-green-400 transition-all"
+                            style={{
+                                background: `linear-gradient(to right, #4CAF50 0%, #4CAF50 ${(monthlyGoal - 500) / (10000 - 500) * 100}%, #1f2937 ${(monthlyGoal - 500) / (10000 - 500) * 100}%, #1f2937 100%)`
+                            }}
+                        />
+                        <div className="flex justify-between mt-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <span>R$ 500</span>
+                            <span>R$ 10.000+</span>
+                        </div>
+                    </div>
+
+                    {/* Result Badge */}
+                    <div className="relative z-10 bg-[#0A382A] rounded-2xl p-6 border border-[#4CAF50]/30 flex items-center justify-between shadow-xl">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-[#4CAF50] text-white rounded-xl shadow-lg shadow-green-500/20 animate-pulse">
+                                <TargetIcon className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <p className="text-[#4CAF50] text-xs font-bold uppercase tracking-widest mb-1">Sua Meta Diária</p>
+                                <p className="text-white font-medium text-sm">Para atingir esse ganho, você precisa:</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                             <span className="block text-3xl font-bold text-white">~{unitsPerDay} <span className="text-lg text-gray-400 font-normal">un/dia</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- VIEWS ---
 
 export const OverviewView = () => {
@@ -250,6 +384,316 @@ export const OverviewView = () => {
                         <div className="bg-orange-400 h-1.5 rounded-full" style={{ width: '66%' }}></div>
                     </div>
                 </div>
+            </div>
+        </div>
+    );
+};
+
+export const AdminOverviewView = () => {
+    const { consultant } = useOutletContext<DashboardContextType>();
+    const [tab, setTab] = useState<'revenda' | 'lideranca'>('revenda');
+
+    return (
+        <div className="space-y-8 animate-fade-in">
+            {/* Header Date Info */}
+            <div className="flex justify-between items-center px-2">
+                <div>
+                     <h2 className="text-2xl md:text-3xl font-serif font-bold text-[#0A382A]">Olá, Administrador! 👋</h2>
+                </div>
+                <span className="text-gray-400 text-sm italic hidden md:block">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+            </div>
+
+            {/* HERO SECTION - SPLIT LAYOUT */}
+            <div className="flex flex-col xl:flex-row gap-6">
+                
+                {/* Left: Main Hero Banner (Green #0A382A) */}
+                <div className="flex-[2] bg-[#0A382A] rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden flex flex-col justify-center min-h-[420px] shadow-lg shadow-green-900/20">
+                    {/* Background Texture */}
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white opacity-[0.03] rounded-full translate-x-1/3 -translate-y-1/3 blur-3xl"></div>
+                    
+                    <div className="relative z-10">
+                        <div className="inline-block bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 mb-6">
+                            <span className="text-xs font-bold uppercase tracking-widest text-green-100">Modelo de Negócio</span>
+                        </div>
+                        
+                        <h1 className="text-4xl md:text-5xl font-serif font-bold leading-tight mb-6 text-white">
+                            Faça seu negócio <br/>
+                            <span className="text-[#4CAF50]">do seu jeito</span>
+                        </h1>
+                        
+                        <p className="text-green-50/70 text-lg font-light max-w-lg mb-10 leading-relaxed">
+                            Liberdade total. Escolha entre lucro rápido com vendas diretas ou construa um legado duradouro formando sua própria equipe.
+                        </p>
+
+                        <div className="flex flex-wrap gap-4">
+                            <Link to="/admin/novo-pedido" className="flex-1 md:flex-none px-6 py-4 bg-white text-[#0A382A] rounded-2xl font-bold shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all flex items-center justify-center gap-3 min-w-[200px] group">
+                                <ShoppingCartIcon className="h-6 w-6 group-hover:scale-110 transition-transform" />
+                                <div className="text-left">
+                                    <span className="block text-[10px] uppercase text-gray-500 font-extrabold tracking-wider">Foco em</span>
+                                    <span className="text-lg">Venda Direta</span>
+                                </div>
+                            </Link>
+                            
+                            <Link to="/admin/convidar" className="flex-1 md:flex-none px-6 py-4 bg-[#144d3b] text-white border border-white/5 rounded-2xl font-bold hover:bg-[#1a5e48] transition-all flex items-center justify-center gap-3 min-w-[200px]">
+                                <UsersIcon className="h-6 w-6 text-[#4CAF50]" />
+                                <div className="text-left">
+                                    <span className="block text-[10px] uppercase text-gray-400 font-extrabold tracking-wider">Foco em</span>
+                                    <span className="text-lg">Construção de Time</span>
+                                </div>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right: Info Card (Dark #1C2833) */}
+                <div className="w-full xl:w-96 bg-[#1C2833] rounded-[2.5rem] p-8 text-white flex flex-col shadow-lg shadow-gray-900/20">
+                    {/* Tabs */}
+                    <div className="bg-[#0f172a] p-1.5 rounded-xl flex mb-8 border border-white/5">
+                        <button 
+                            onClick={() => setTab('revenda')}
+                            className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${tab === 'revenda' ? 'bg-white text-[#1C2833] shadow' : 'text-gray-500 hover:text-white'}`}
+                        >
+                            Revenda
+                        </button>
+                        <button 
+                            onClick={() => setTab('lideranca')}
+                            className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${tab === 'lideranca' ? 'bg-white text-[#1C2833] shadow' : 'text-gray-500 hover:text-white'}`}
+                        >
+                            Liderança
+                        </button>
+                    </div>
+
+                    <div className="flex-1 flex flex-col justify-center animate-fade-in relative">
+                        {/* Decorative Icon BG */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/[0.02] pointer-events-none">
+                            {tab === 'revenda' ? <TagIcon className="h-48 w-48" /> : <BriefcaseIcon className="h-48 w-48" />}
+                        </div>
+
+                        {tab === 'revenda' ? (
+                            <div className="space-y-8 relative z-10">
+                                <div>
+                                    <div className="w-14 h-14 bg-[#4CAF50]/10 rounded-2xl flex items-center justify-center text-[#4CAF50] mb-4 border border-[#4CAF50]/20">
+                                        <TagIcon className="h-7 w-7" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-2 text-white">Lucro de 100%</h3>
+                                    <p className="text-gray-400 text-sm leading-relaxed">
+                                        Margem excepcional. Compre por <span className="text-white font-bold">R$ 17,50</span> e revenda por <span className="text-white font-bold">R$ 35,00</span>.
+                                    </p>
+                                </div>
+                                <div>
+                                    <div className="w-14 h-14 bg-[#4CAF50]/10 rounded-2xl flex items-center justify-center text-[#4CAF50] mb-4 border border-[#4CAF50]/20">
+                                        <TruckIcon className="h-7 w-7" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-2 text-white">Pronta Entrega</h3>
+                                    <p className="text-gray-400 text-sm leading-relaxed">
+                                        Receba produtos em casa e atenda seus clientes com agilidade e confiança.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-8 relative z-10">
+                                <div>
+                                    <div className="w-14 h-14 bg-[#9c27b0]/10 rounded-2xl flex items-center justify-center text-[#9c27b0] mb-4 border border-[#9c27b0]/20">
+                                        <TrendingUpIcon className="h-7 w-7" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-2 text-white">Escalabilidade</h3>
+                                    <p className="text-gray-400 text-sm leading-relaxed">
+                                        Ganhe sobre o volume de vendas de toda a sua rede de indicados diretos e indiretos.
+                                    </p>
+                                </div>
+                                <div>
+                                    <div className="w-14 h-14 bg-[#9c27b0]/10 rounded-2xl flex items-center justify-center text-[#9c27b0] mb-4 border border-[#9c27b0]/20">
+                                        <BriefcaseIcon className="h-7 w-7" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-2 text-white">Mentoria</h3>
+                                    <p className="text-gray-400 text-sm leading-relaxed">
+                                        Treine seu time e receba bônus exclusivos por formação de novos líderes.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom: Simulator (Premium Component) */}
+            <EarningsSimulator />
+        </div>
+    );
+};
+
+export const AdminGoalsView = () => {
+    // Mock data for demo - in production replace with supabase fetch
+    const teamMetrics: GoalMetric[] = MOCK_DATA.team.map(member => {
+        const sales = parseFloat(member.sales.replace('R$ ', '').replace('.', '').replace(',', '.'));
+        const goal = 5000;
+        return {
+            consultant_id: member.id,
+            name: member.name,
+            total_sales: sales,
+            goal: goal,
+            percentage: (sales / goal) * 100
+        };
+    }).sort((a, b) => b.total_sales - a.total_sales);
+
+    const totalBonus = teamMetrics
+        .filter(m => m.percentage >= 100)
+        .reduce((acc, curr) => acc + (curr.total_sales * 0.1), 0); // 10% bonus for goal met
+
+    return (
+        <div className="space-y-8 animate-fade-in">
+            <div className="bg-[#0A382A] rounded-[2rem] p-8 md:p-12 text-white relative overflow-hidden shadow-lg">
+                <div className="relative z-10">
+                     <h2 className="text-3xl font-serif font-bold mb-2">Painel de Metas</h2>
+                     <p className="text-green-200/70">Acompanhe o desempenho e bonificações da equipe.</p>
+                     
+                     <div className="mt-8 p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 inline-block min-w-[300px]">
+                         <p className="text-xs font-bold uppercase tracking-widest text-green-300 mb-1">Bonificação Acumulada (Est.)</p>
+                         <h3 className="text-4xl font-bold text-white">{formatCurrency(totalBonus)}</h3>
+                     </div>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th className="p-4 text-sm font-bold text-gray-500">Consultor</th>
+                            <th className="p-4 text-sm font-bold text-gray-500">Vendas / Meta</th>
+                            <th className="p-4 text-sm font-bold text-gray-500">Progresso</th>
+                            <th className="p-4 text-sm font-bold text-gray-500">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {teamMetrics.map((metric) => (
+                            <tr key={metric.consultant_id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                                <td className="p-4">
+                                    <div className="font-bold text-gray-800">{metric.name}</div>
+                                    <div className="text-xs text-gray-400">ID: {metric.consultant_id}</div>
+                                </td>
+                                <td className="p-4 text-sm">
+                                    <span className="font-bold text-gray-700">{formatCurrency(metric.total_sales)}</span>
+                                    <span className="text-gray-400"> / {formatCurrency(metric.goal)}</span>
+                                </td>
+                                <td className="p-4 w-1/3">
+                                    <div className="w-full bg-gray-100 rounded-full h-2.5">
+                                        <div 
+                                            className={`h-2.5 rounded-full ${
+                                                metric.percentage >= 100 ? 'bg-green-500' : 
+                                                metric.percentage >= 80 ? 'bg-yellow-400' : 'bg-gray-300'
+                                            }`} 
+                                            style={{ width: `${Math.min(metric.percentage, 100)}%` }}
+                                        ></div>
+                                    </div>
+                                    <div className="text-right text-xs font-bold text-gray-500 mt-1">{metric.percentage.toFixed(0)}%</div>
+                                </td>
+                                <td className="p-4">
+                                    {metric.percentage >= 100 ? (
+                                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200">
+                                            Meta Batida
+                                        </span>
+                                    ) : metric.percentage >= 80 ? (
+                                        <span className="px-3 py-1 bg-yellow-50 text-yellow-700 rounded-full text-xs font-bold border border-yellow-100">
+                                            Quase lá
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-400 text-xs font-bold">Em andamento</span>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
+export const AdminWithdrawalsView = () => {
+    const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    // Mock data fetching
+    useEffect(() => {
+        // In production: supabase.from('withdrawals').select('*')...
+        setWithdrawals([
+            { id: '1', consultant_id: '007053', amount: 350.00, status: 'pending', created_at: '2023-11-01' },
+            { id: '2', consultant_id: '102031', amount: 1200.00, status: 'approved', processed_at: '2023-10-28', created_at: '2023-10-25' },
+        ]);
+    }, []);
+
+    const handleAction = async (id: string, action: 'approve' | 'reject') => {
+        setLoading(true);
+        // Simulate API call
+        setTimeout(() => {
+            setWithdrawals(prev => prev.map(w => w.id === id ? { ...w, status: action === 'approve' ? 'approved' : 'rejected' } : w));
+            setLoading(false);
+        }, 500);
+    };
+
+    return (
+        <div className="space-y-8 animate-fade-in">
+             <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-serif font-bold text-gray-800">Solicitações de Saque</h2>
+                <div className="flex gap-2">
+                    <button className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-600 shadow-sm">Exportar CSV</button>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th className="p-4 text-sm font-bold text-gray-500">ID Solicitante</th>
+                            <th className="p-4 text-sm font-bold text-gray-500">Valor</th>
+                            <th className="p-4 text-sm font-bold text-gray-500">Data</th>
+                            <th className="p-4 text-sm font-bold text-gray-500">Status</th>
+                            <th className="p-4 text-sm font-bold text-gray-500 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         {withdrawals.length === 0 ? (
+                            <tr><td colSpan={5} className="p-8 text-center text-gray-500">Nenhuma solicitação pendente.</td></tr>
+                        ) : (
+                            withdrawals.map((item) => (
+                                <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                                    <td className="p-4 text-gray-900 font-medium">{item.consultant_id}</td>
+                                    <td className="p-4 font-bold text-brand-green-dark">{formatCurrency(item.amount)}</td>
+                                    <td className="p-4 text-gray-500 text-sm">{new Date(item.created_at).toLocaleDateString()}</td>
+                                    <td className="p-4">
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                                            item.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                            item.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                            'bg-yellow-100 text-yellow-700'
+                                        }`}>
+                                            {item.status === 'pending' ? 'Aguardando' : item.status === 'approved' ? 'Aprovado' : 'Rejeitado'}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        {item.status === 'pending' && (
+                                            <div className="flex justify-end gap-2">
+                                                <button 
+                                                    onClick={() => handleAction(item.id, 'approve')}
+                                                    disabled={loading}
+                                                    className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition"
+                                                >
+                                                    Aprovar
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleAction(item.id, 'reject')}
+                                                    disabled={loading}
+                                                    className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 rounded-lg text-xs font-bold hover:bg-red-100 transition"
+                                                >
+                                                    Rejeitar
+                                                </button>
+                                            </div>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
@@ -471,7 +915,7 @@ export const NewOrderView = () => {
         const totalValue = formatCurrency(subtotal + (shippingCost || 0));
         
         // Abrir WhatsApp imediatamente (Fire and Forget)
-        const message = `Olá! Sou o consultor ${consultant.name} (ID: ${consultant.id}). Gostaria de finalizar o pedido *${orderId}*.\n\nItens: ${quantity}x Display Canela de Velho\nTotal: ${totalValue}`;
+        const message = `Olá! Sou o consultor ${consultant.name.split(' ')[0]} (ID: ${consultant.id}). Gostaria de finalizar o pedido *${orderId}*.\n\nItens: ${quantity}x Display Canela de Velho\nTotal: ${totalValue}`;
         const whatsappUrl = `https://wa.me/557199190515?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
         
@@ -796,7 +1240,7 @@ export const AdminPanelView = () => {
 
 // --- LAYOUT COMPONENTS ---
 
-const SidebarItem = ({ icon: Icon, label, to, active, onClick }: { icon: any, label: string, to?: string, active?: boolean, onClick?: () => void }) => {
+const SidebarItem = ({ icon: Icon, label, to, active, onClick, adminMode }: { icon: any, label: string, to?: string, active?: boolean, onClick?: () => void, adminMode?: boolean }) => {
     const navigate = useNavigate();
 
     const handleClick = () => {
@@ -804,18 +1248,38 @@ const SidebarItem = ({ icon: Icon, label, to, active, onClick }: { icon: any, la
         if (to) navigate(to);
     };
 
+    // New "Elevate" Design System for Sidebar Items
+    // Pill shape, high contrast
+    
+    // Base classes common to both
+    const baseClasses = "w-full flex items-center gap-4 px-6 py-4 rounded-full transition-all duration-200 group relative overflow-hidden";
+    
+    let activeClasses = "";
+    let inactiveClasses = "";
+
+    if (adminMode) {
+        // --- Admin Green Theme ---
+        // Active: White background, Green text, Shadow
+        activeClasses = "bg-white text-[#0A382A] shadow-md font-bold";
+        // Inactive: Transparent, White text with opacity
+        inactiveClasses = "text-white/70 hover:bg-white/10 hover:text-white font-medium";
+    } else {
+        // --- Consultant Dark Theme (Legacy/Standard) ---
+        activeClasses = "bg-brand-green-dark text-white shadow-lg shadow-green-900/20";
+        inactiveClasses = "text-gray-400 hover:bg-white/5 hover:text-white";
+    }
+
     return (
         <button 
             onClick={handleClick}
-            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group ${
-                active 
-                ? 'bg-brand-green-dark text-white shadow-lg shadow-green-900/20' 
-                : 'text-gray-400 hover:bg-white/5 hover:text-white'
-            }`}
+            className={`${baseClasses} ${active ? activeClasses : inactiveClasses}`}
         >
-            <Icon className={`h-6 w-6 transition-colors ${active ? 'text-brand-green-mid' : 'text-gray-500 group-hover:text-white'}`} />
-            <span className={`font-medium ${active ? 'font-bold' : ''}`}>{label}</span>
-            {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-green-mid shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>}
+            <Icon className={`h-6 w-6 z-10 relative ${
+                active 
+                    ? (adminMode ? 'text-[#0A382A]' : 'text-brand-green-mid') 
+                    : 'text-current'
+            }`} />
+            <span className="z-10 relative">{label}</span>
         </button>
     );
 };
@@ -825,8 +1289,8 @@ export const DashboardShell = ({ consultant, children }: { consultant: Consultan
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Determine Base Path for navigation links
-    const basePath = consultant.role === 'admin' ? '/admin' : '/consultor';
+    const isAdmin = consultant.role === 'admin';
+    const basePath = isAdmin ? '/admin' : '/consultor';
     
     // Check active states
     const isActive = (path: string) => location.pathname.includes(path);
@@ -836,141 +1300,233 @@ export const DashboardShell = ({ consultant, children }: { consultant: Consultan
         navigate('/login');
     };
 
+    // --- Sidebar Background Color (Design Specification) ---
+    // Admin: #0A382A (Deep Green)
+    // Consultant: brand-dark-bg (Dark Slate)
+    const sidebarBg = isAdmin ? 'bg-[#0A382A]' : 'bg-brand-dark-bg';
+    const mainBg = isAdmin ? 'bg-[#F9F9F9]' : 'bg-gray-50';
+
     return (
-        <div className="min-h-screen bg-gray-50 flex font-sans">
+        <div className={`min-h-screen ${mainBg} flex font-sans`}>
             {/* Mobile Sidebar Overlay */}
             {sidebarOpen && (
                 <div 
-                    className="fixed inset-0 bg-brand-dark-bg/80 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
             <aside className={`
-                fixed lg:sticky top-0 left-0 z-50 h-screen w-72 bg-brand-dark-bg border-r border-white/5 shadow-2xl transition-transform duration-300 ease-out
+                fixed lg:sticky top-0 left-0 z-50 h-screen w-[280px] ${sidebarBg} shadow-2xl transition-transform duration-300 ease-out flex flex-col
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
-                <div className="p-6 flex items-center justify-between">
-                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-brand-green-dark rounded-xl flex items-center justify-center text-white font-serif font-bold text-xl">
-                            B
-                        </div>
-                        <div>
-                            <h1 className="text-white font-bold text-lg leading-tight">Clube Brotos</h1>
-                            <p className="text-gray-500 text-xs uppercase tracking-widest">Painel {consultant.role === 'admin' ? 'Admin' : 'Consultor'}</p>
-                        </div>
-                    </div>
-                    <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-400">
+                {/* 1. Brand Logo Area */}
+                <div className="p-8 flex items-center justify-center">
+                     <div className="w-full bg-white rounded-2xl py-4 px-6 shadow-lg flex justify-center items-center">
+                        <img src="https://i.imgur.com/ntlcx07.png" alt="Brotos Logo" className="h-10" />
+                     </div>
+                     <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white absolute top-4 right-4">
                         <CloseIcon />
                     </button>
                 </div>
 
-                <div className="px-4 py-6 space-y-2 overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
-                    <div className="px-4 mb-2 text-xs font-bold text-gray-500 uppercase tracking-widest">Principal</div>
+                {/* 2. Admin Profile Card (Elevate Design) */}
+                <div className="px-6 mb-8 text-center">
+                    <div className="flex flex-col items-center">
+                        <div className={`h-20 w-20 ${isAdmin ? 'bg-[#d4a373] text-[#0A382A]' : 'bg-brand-green-dark text-white'} rounded-full flex items-center justify-center font-bold text-3xl shadow-xl mb-4 border-4 border-white/10`}>
+                            {consultant.name.charAt(0)}
+                        </div>
+                        <h2 className="text-white font-bold text-lg leading-tight mb-1">{consultant.name}</h2>
+                        <p className="text-white/50 text-xs font-mono mb-3">ID: {consultant.id}</p>
+                        
+                        <div className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest ${isAdmin ? 'bg-[#4CAF50] text-white shadow-lg shadow-green-900/40' : 'bg-gray-800 text-gray-400'}`}>
+                            {consultant.role === 'admin' ? 'ADMINISTRADOR' : consultant.role.toUpperCase()}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Navigation Menu */}
+                <div className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar">
+                    
                     <SidebarItem 
                         icon={ChartBarIcon} 
                         label="Visão Geral" 
                         to={`${basePath}/dashboard`}
-                        active={isActive('/dashboard')} 
-                    />
-                    <SidebarItem 
-                        icon={ShoppingCartIcon} 
-                        label="Novo Pedido" 
-                        to={`${basePath}/novo-pedido`}
-                        active={isActive('/novo-pedido')} 
-                    />
-                    <SidebarItem 
-                        icon={PackageIcon} 
-                        label="Meus Pedidos" 
-                        to={`${basePath}/meus-pedidos`}
-                        active={isActive('/meus-pedidos')} 
+                        active={isActive('/dashboard')}
+                        adminMode={isAdmin}
                     />
 
-                    <div className="px-4 mt-8 mb-2 text-xs font-bold text-gray-500 uppercase tracking-widest">Crescimento</div>
-                    <SidebarItem 
-                        icon={PhotoIcon} 
-                        label="Marketing" 
-                        to={`${basePath}/materiais`}
-                        active={isActive('/materiais')} 
-                    />
-                    <SidebarItem 
-                        icon={AcademicCapIcon} 
-                        label="UniBrotos" 
-                        to={`${basePath}/unibrotos`}
-                        active={isActive('/unibrotos')} 
-                    />
-                     <SidebarItem 
-                        icon={UserPlusIcon} 
-                        label="Convidar" 
-                        to={`${basePath}/convidar`}
-                        active={isActive('/convidar')} 
-                    />
-
-                    {/* Restricted Sections */}
-                    {(consultant.role === 'admin' || consultant.role === 'leader') && (
+                    {isAdmin ? (
+                        // ADMIN MENU
                         <>
-                            <div className="px-4 mt-8 mb-2 text-xs font-bold text-brand-earth uppercase tracking-widest">Gestão</div>
+                             <SidebarItem 
+                                icon={PhotoIcon} 
+                                label="Materiais de Apoio" 
+                                to={`${basePath}/materiais`}
+                                active={isActive('/materiais')}
+                                adminMode={isAdmin} 
+                            />
+                            <SidebarItem 
+                                icon={AcademicCapIcon} 
+                                label="UniBrotos" 
+                                to={`${basePath}/unibrotos`}
+                                active={isActive('/unibrotos')}
+                                adminMode={isAdmin} 
+                            />
+                             <SidebarItem 
+                                icon={PackageIcon} 
+                                label="Meus Pedidos" 
+                                to={`${basePath}/meus-pedidos`}
+                                active={isActive('/meus-pedidos')}
+                                adminMode={isAdmin} 
+                            />
+                             <SidebarItem 
+                                icon={ShoppingCartIcon} 
+                                label="Fazer Pedido" 
+                                to={`${basePath}/novo-pedido`}
+                                active={isActive('/novo-pedido')}
+                                adminMode={isAdmin} 
+                            />
+
+                            <div className={`px-6 mt-8 mb-4 text-[10px] font-extrabold uppercase tracking-widest ${isAdmin ? 'text-white/30' : 'text-gray-500'}`}>
+                                Expansão
+                            </div>
+                            
+                            <SidebarItem 
+                                icon={UserPlusIcon} 
+                                label="Convidar Consultor" 
+                                to={`${basePath}/convidar`}
+                                active={isActive('/convidar')}
+                                adminMode={isAdmin} 
+                            />
                             <SidebarItem 
                                 icon={BriefcaseIcon} 
                                 label="Meu Negócio" 
                                 to={`${basePath}/meu-negocio`}
-                                active={isActive('/meu-negocio')} 
+                                active={isActive('/meu-negocio')}
+                                adminMode={isAdmin} 
                             />
                             <SidebarItem 
                                 icon={BanknotesIcon} 
                                 label="Financeiro" 
                                 to={`${basePath}/financeiro`}
-                                active={isActive('/financeiro')} 
+                                active={isActive('/financeiro')}
+                                adminMode={isAdmin} 
                             />
-                        </>
-                    )}
-
-                    {consultant.role === 'admin' && (
-                         <>
-                            <div className="px-4 mt-8 mb-2 text-xs font-bold text-red-400 uppercase tracking-widest">Admin</div>
                             <SidebarItem 
+                                icon={TargetIcon} 
+                                label="Metas da Equipe" 
+                                to={`${basePath}/metas`}
+                                active={isActive('/metas')}
+                                adminMode={isAdmin} 
+                            />
+                            <SidebarItem 
+                                icon={HandshakeIcon} 
+                                label="Solicitações de Saque" 
+                                to={`${basePath}/saques`}
+                                active={isActive('/saques')}
+                                adminMode={isAdmin} 
+                            />
+                             <SidebarItem 
                                 icon={LockClosedIcon} 
                                 label="Administração" 
                                 to={`${basePath}/administracao`}
-                                active={isActive('/administracao')} 
+                                active={isActive('/administracao')}
+                                adminMode={isAdmin} 
                             />
+                        </>
+                    ) : (
+                        // CONSULTANT MENU (Unchanged structure, just style)
+                        <>
+                            <SidebarItem 
+                                icon={ShoppingCartIcon} 
+                                label="Novo Pedido" 
+                                to={`${basePath}/novo-pedido`}
+                                active={isActive('/novo-pedido')}
+                                adminMode={isAdmin} 
+                            />
+                            <SidebarItem 
+                                icon={PackageIcon} 
+                                label="Meus Pedidos" 
+                                to={`${basePath}/meus-pedidos`}
+                                active={isActive('/meus-pedidos')}
+                                adminMode={isAdmin} 
+                            />
+
+                            <div className="px-6 mt-8 mb-4 text-[10px] font-extrabold uppercase tracking-widest text-gray-500">Crescimento</div>
+                            <SidebarItem 
+                                icon={PhotoIcon} 
+                                label="Marketing" 
+                                to={`${basePath}/materiais`}
+                                active={isActive('/materiais')}
+                                adminMode={isAdmin} 
+                            />
+                            <SidebarItem 
+                                icon={AcademicCapIcon} 
+                                label="UniBrotos" 
+                                to={`${basePath}/unibrotos`}
+                                active={isActive('/unibrotos')}
+                                adminMode={isAdmin} 
+                            />
+                             <SidebarItem 
+                                icon={UserPlusIcon} 
+                                label="Convidar" 
+                                to={`${basePath}/convidar`}
+                                active={isActive('/convidar')}
+                                adminMode={isAdmin} 
+                            />
+
+                            {(consultant.role === 'leader') && (
+                                <>
+                                    <div className="px-6 mt-8 mb-4 text-[10px] font-extrabold uppercase tracking-widest text-brand-earth">Gestão</div>
+                                    <SidebarItem 
+                                        icon={BriefcaseIcon} 
+                                        label="Meu Negócio" 
+                                        to={`${basePath}/meu-negocio`}
+                                        active={isActive('/meu-negocio')}
+                                        adminMode={isAdmin} 
+                                    />
+                                    <SidebarItem 
+                                        icon={BanknotesIcon} 
+                                        label="Financeiro" 
+                                        to={`${basePath}/financeiro`}
+                                        active={isActive('/financeiro')}
+                                        adminMode={isAdmin} 
+                                    />
+                                </>
+                            )}
                         </>
                     )}
                 </div>
 
-                <div className="absolute bottom-0 left-0 w-full p-4 bg-brand-dark-bg border-t border-white/5">
-                    <SidebarItem icon={LogoutIcon} label="Sair" onClick={handleLogout} />
+                {/* 4. Footer Action */}
+                <div className="p-6">
+                    <button 
+                        onClick={handleLogout}
+                        className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl transition-colors font-bold ${isAdmin ? 'bg-[#144d3b] text-red-300 hover:bg-red-900/20 hover:text-red-200' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                    >
+                        <LogoutIcon className="h-5 w-5" />
+                        Sair do Sistema
+                    </button>
                 </div>
             </aside>
 
             {/* Main Content */}
             <main className="flex-1 min-w-0 transition-all duration-300">
-                {/* Header */}
-                <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+                {/* Mobile Header */}
+                <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between lg:hidden">
                     <button 
                         onClick={() => setSidebarOpen(true)}
-                        className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                        className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg"
                     >
                         <MenuIcon />
                     </button>
-
-                    <div className="hidden md:flex items-center gap-4 text-sm text-gray-500">
-                        <span>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <div className="hidden md:flex flex-col items-end mr-2">
-                            <span className="font-bold text-gray-800 text-sm">{consultant.name}</span>
-                            <span className="text-xs text-gray-500 uppercase">{consultant.role}</span>
-                        </div>
-                        <div className="h-10 w-10 bg-brand-green-light text-brand-green-dark rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm">
-                            {consultant.name.charAt(0)}
-                        </div>
-                    </div>
+                    <BrandLogo className="h-8" />
+                    <div className="w-8"></div> {/* Spacer */}
                 </header>
 
-                <div className="p-4 md:p-8 max-w-7xl mx-auto">
+                <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
                     {children}
                 </div>
             </main>

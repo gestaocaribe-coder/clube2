@@ -15,7 +15,10 @@ import {
     InviteView, 
     BusinessView, 
     FinancialView, 
-    AdminPanelView 
+    AdminPanelView,
+    AdminOverviewView,
+    AdminGoalsView,
+    AdminWithdrawalsView
 } from './ConsultantSystem';
 
 // --- Auth Guard Component ---
@@ -111,7 +114,7 @@ export default function App() {
         {/* Admin Routes */}
         <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<OverviewView />} />
+            <Route path="dashboard" element={<AdminOverviewView />} />
             <Route path="administracao" element={<AdminPanelView />} />
             <Route path="materiais" element={<MaterialsView />} />
             <Route path="unibrotos" element={<UniBrotosView />} />
@@ -120,6 +123,8 @@ export default function App() {
             <Route path="meu-negocio" element={<BusinessView />} />
             <Route path="financeiro" element={<FinancialView />} />
             <Route path="convidar" element={<InviteView />} />
+            <Route path="metas" element={<AdminGoalsView />} />
+            <Route path="saques" element={<AdminWithdrawalsView />} />
         </Route>
 
         {/* Consultant Routes */}

@@ -95,3 +95,22 @@ export interface Order {
     status: string;
     created_at?: string;
 }
+
+// --- Financial & Admin Types ---
+
+export interface Withdrawal {
+    id: string;
+    consultant_id: string;
+    amount: number;
+    status: 'pending' | 'approved' | 'rejected';
+    processed_at?: string;
+    created_at: string;
+}
+
+export interface GoalMetric {
+    consultant_id: string;
+    name: string;
+    total_sales: number;
+    goal: number;
+    percentage: number;
+}
