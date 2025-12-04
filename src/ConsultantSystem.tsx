@@ -1402,28 +1402,83 @@ export const AdminSupportView = () => (
     </div>
 );
 
-export const AdminSettingsView = () => (
-    <div className="animate-fade-in">
-        <h1 className="text-3xl font-serif font-bold text-gray-900 mb-6">Configurações do Sistema</h1>
-        <div className="bg-white rounded-2xl p-8 border border-gray-100 max-w-2xl">
-            <h3 className="font-bold text-lg mb-4">Preferências Gerais</h3>
-            <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                    <span className="font-medium text-gray-700">Manutenção do Sistema</span>
-                    <div className="w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer">
-                        <div className="w-4 h-4 bg-white rounded-full absolute top-1 left-1"></div>
+export const AdminSettingsView = () => {
+    const { currentTheme, setTheme, colors } = useAdminTheme();
+
+    return (
+        <div className="animate-fade-in">
+            <h1 className="text-3xl font-serif font-bold mb-6" style={{ color: colors.text }}>Configurações do Sistema</h1>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Appearance Section */}
+                <div className="bg-white rounded-2xl p-8 border border-gray-100">
+                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                        <span className="p-2 bg-gray-100 rounded-lg"><EyeIcon className="h-5 w-5"/></span>
+                        Aparência do Painel
+                    </h3>
+                    <p className="text-gray-500 text-sm mb-6">Escolha o tema que melhor se adapta ao seu estilo de gestão.</p>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <button 
+                            onClick={() => setTheme('green')}
+                            className={`relative p-4 rounded-xl border-2 transition-all ${
+                                currentTheme === 'green' 
+                                ? 'border-brand-green-mid bg-green-50 ring-1 ring-brand-green-mid' 
+                                : 'border-gray-100 hover:border-gray-200'
+                            }`}
+                        >
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="h-10 w-10 rounded-full bg-[#0A382A] shadow-md grid place-items-center">
+                                    <div className="h-4 w-4 rounded-full bg-[#4CAF50]"></div>
+                                </div>
+                                {currentTheme === 'green' && <CheckCircleIcon className="h-6 w-6 text-brand-green-mid" />}
+                            </div>
+                            <p className="font-bold text-gray-900 text-left">Elevate Green</p>
+                            <p className="text-xs text-gray-500 text-left">Padrão Corporativo</p>
+                        </button>
+
+                        <button 
+                            onClick={() => setTheme('navy')}
+                            className={`relative p-4 rounded-xl border-2 transition-all ${
+                                currentTheme === 'navy' 
+                                ? 'border-sky-500 bg-sky-50 ring-1 ring-sky-500' 
+                                : 'border-gray-100 hover:border-gray-200'
+                            }`}
+                        >
+                             <div className="flex items-center justify-between mb-3">
+                                <div className="h-10 w-10 rounded-full bg-[#0F172A] shadow-md grid place-items-center">
+                                    <div className="h-4 w-4 rounded-full bg-[#38BDF8]"></div>
+                                </div>
+                                {currentTheme === 'navy' && <CheckCircleIcon className="h-6 w-6 text-sky-500" />}
+                            </div>
+                            <p className="font-bold text-gray-900 text-left">Midnight Navy</p>
+                            <p className="text-xs text-gray-500 text-left">Alto Contraste</p>
+                        </button>
                     </div>
                 </div>
-                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                    <span className="font-medium text-gray-700">Novos Cadastros</span>
-                    <div className="w-12 h-6 bg-brand-green-mid rounded-full relative cursor-pointer">
-                        <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1"></div>
+
+                {/* General Settings */}
+                <div className="bg-white rounded-2xl p-8 border border-gray-100">
+                    <h3 className="font-bold text-lg mb-4">Preferências Gerais</h3>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                            <span className="font-medium text-gray-700">Manutenção do Sistema</span>
+                            <div className="w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer">
+                                <div className="w-4 h-4 bg-white rounded-full absolute top-1 left-1"></div>
+                            </div>
+                        </div>
+                         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                            <span className="font-medium text-gray-700">Novos Cadastros</span>
+                            <div className="w-12 h-6 bg-brand-green-mid rounded-full relative cursor-pointer">
+                                <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 export const AdminGoalsView = () => {
     // --- Team Goals Logic ---
