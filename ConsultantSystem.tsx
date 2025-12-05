@@ -1019,15 +1019,50 @@ export const ConsultantRegister = () => (
 export const LoginScreen = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
+
+    useEffect(() => {
+        // Clear any simulated or stale sessions on load
+        localStorage.removeItem('sb-admin-session');
+        supabase.auth.signOut();
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // Simulate login
-        setTimeout(() => {
-            navigate('/consultor/dashboard');
+        setErrorMsg('');
+
+        try {
+            // 1. Authenticate with Supabase
+            const { data: { session }, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) throw error;
+
+            if (session) {
+                // 2. Fetch User Profile to check Role
+                const { data: profile } = await supabase
+                    .from('consultants')
+                    .select('role')
+                    .eq('auth_id', session.user.id)
+                    .single();
+
+                if (profile?.role === 'admin') {
+                    navigate('/admin/dashboard');
+                } else {
+                    navigate('/consultor/dashboard');
+                }
+            }
+        } catch (err: any) {
+            console.error(err);
+            setErrorMsg('Email ou senha inválidos.');
+        } finally {
             setLoading(false);
-        }, 1000);
+        }
     };
 
     return (
@@ -1038,9 +1073,28 @@ export const LoginScreen = () => {
                     <h2 className="text-2xl font-serif font-bold">Portal do Consultor</h2>
                     <p className="text-gray-500 text-sm mt-2">Acesse sua área exclusiva</p>
                 </div>
+                
+                {errorMsg && (
+                    <div className="bg-red-50 text-red-500 text-sm text-center p-3 rounded-lg mb-4">
+                        {errorMsg}
+                    </div>
+                )}
+
                 <form onSubmit={handleLogin} className="space-y-4">
-                    <input type="email" placeholder="E-mail" className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:border-brand-green-mid" />
-                    <input type="password" placeholder="Senha" className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:border-brand-green-mid" />
+                    <input 
+                        type="email" 
+                        placeholder="E-mail" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:border-brand-green-mid" 
+                    />
+                    <input 
+                        type="password" 
+                        placeholder="Senha" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:border-brand-green-mid" 
+                    />
                     <button disabled={loading} className="w-full bg-brand-green-mid text-white py-3 rounded-lg font-bold hover:bg-brand-green-dark transition-colors disabled:opacity-70">
                         {loading ? 'Entrando...' : 'Entrar'}
                     </button>
