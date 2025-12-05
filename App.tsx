@@ -34,24 +34,45 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
+                // 1. Check for Real Supabase Session
                 const { data: { session } } = await supabase.auth.getSession();
                 
-                if (!session) {
+                // 2. Check for Simulated Admin Session (Dev/Demo Mode)
+                const isSimulatedAdmin = localStorage.getItem('sb-admin-session') === 'true';
+
+                if (!session && !isSimulatedAdmin) {
                     setLoading(false);
                     return;
                 }
 
-                // Check consultant profile
-                const { data: consultant, error } = await supabase
-                    .from('consultants')
-                    .select('*')
-                    .eq('auth_id', session.user.id)
-                    .single();
+                if (isSimulatedAdmin) {
+                    // Mock Admin Profile
+                    setUser({
+                        id: 'admin-root',
+                        auth_id: 'admin-root-auth',
+                        name: 'Administrador Master',
+                        email: 'root@brotosdaterra.com.br',
+                        whatsapp: '00000000000',
+                        role: 'admin',
+                        created_at: new Date().toISOString()
+                    });
+                    setLoading(false);
+                    return;
+                }
 
-                if (consultant) {
-                    setUser(consultant as Consultant);
-                } else if (error) {
-                    console.error("Error fetching consultant profile", error);
+                // Check consultant profile from DB if real session exists
+                if (session) {
+                    const { data: consultant, error } = await supabase
+                        .from('consultants')
+                        .select('*')
+                        .eq('auth_id', session.user.id)
+                        .single();
+
+                    if (consultant) {
+                        setUser(consultant as Consultant);
+                    } else if (error) {
+                        console.error("Error fetching consultant profile", error);
+                    }
                 }
             } catch (error) {
                 console.error("Auth check failed", error);

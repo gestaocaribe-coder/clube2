@@ -226,8 +226,17 @@ export const DashboardShell = ({ children, consultant }: { children?: React.Reac
     };
 
     const handleLogout = async () => {
+        // Check if user was admin to redirect correctly
+        const wasAdmin = localStorage.getItem('sb-admin-session');
+        
         await supabase.auth.signOut();
-        navigate('/login');
+        localStorage.removeItem('sb-admin-session'); // Clear simulated session
+        
+        if (wasAdmin) {
+            navigate('/portal-master');
+        } else {
+            navigate('/login');
+        }
     };
 
     // Define menu items based on role
@@ -1002,6 +1011,8 @@ export const AdminLoginScreen = () => {
         setLoading(true);
         // Simulate admin login
         setTimeout(() => {
+            // Set a simulated session token for the ProtectedRoute to find
+            localStorage.setItem('sb-admin-session', 'true');
             navigate('/admin/dashboard');
             setLoading(false);
         }, 1000);
