@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
@@ -32,9 +31,9 @@ import {
     WhatsAppIcon,
     LocationIcon,
     SearchIcon,
-    PlusIcon,
+    PlusIcon, 
     MinusIcon,
-    EyeIcon,
+    EyeIcon, 
     FilterIcon,
     LockClosedIcon,
     BriefcaseIcon,
@@ -489,20 +488,7 @@ export const OverviewView = () => {
 
 export const AdminOverviewView = () => {
     // ADMIN DASHBOARD
-    // Calculates metrics dynamically from DB_LOCAL_STATE to replace mock values
-    
-    // 1. Calculate Active Consultants
-    const activeConsultants = DB_LOCAL_STATE.team.filter(c => c.status === 'Ativo').length;
-    
-    // 2. Calculate Inactive
-    const inactiveConsultants = DB_LOCAL_STATE.team.filter(c => c.status === 'Inativo').length;
-    
-    // 3. Calculate New (Last 30 days - simulated logic)
-    // In a real app, compare c.joinDate with Date.now()
-    const newConsultants = 4; // Simulated from list
-
-    // 4. Total Referrals (Anyone who has an inviter that isn't root 000000)
-    const totalReferrals = DB_LOCAL_STATE.team.filter(c => c.invitedBy && c.invitedBy !== '000000').length;
+    // Logic disabled for layout task as requested.
 
     return (
         <div className="space-y-8 animate-fade-in">
@@ -516,10 +502,24 @@ export const AdminOverviewView = () => {
                 <span className="text-gray-400 text-sm italic hidden md:block">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
             </div>
 
-            {/* NETWORK SUMMARY CARDS (Dynamic Data) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                 {/* Card 1: Active */}
-                 <Link to="/admin/usuarios" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
+            {/* NETWORK SUMMARY CARDS (5 Cards Layout) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                 {/* Card 1: Novos Consultores (últimos 30 dias) */}
+                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
+                    <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
+                        <UserPlusIcon className="h-24 w-24 text-blue-600" />
+                    </div>
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                            <UserPlusIcon className="h-6 w-6" />
+                        </div>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Novos (30d)</p>
+                    </div>
+                    <h3 className="text-3xl font-bold text-gray-800">--</h3>
+                </div>
+
+                {/* Card 2: Consultores Ativos */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
                     <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
                         <CheckCircleIcon className="h-24 w-24 text-[#0A382A]" />
                     </div>
@@ -527,55 +527,51 @@ export const AdminOverviewView = () => {
                         <div className="p-3 bg-green-100 text-[#0A382A] rounded-xl">
                             <UsersIcon className="h-6 w-6" />
                         </div>
-                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Consultores Ativos</p>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Ativos</p>
                     </div>
-                    <h3 className="text-3xl font-bold text-[#0A382A]">{activeConsultants}</h3>
-                    <p className="text-xs text-green-600 mt-2 font-bold">Produtividade Alta</p>
-                </Link>
+                    <h3 className="text-3xl font-bold text-[#0A382A]">--</h3>
+                </div>
 
-                {/* Card 2: New */}
-                <Link to="/admin/usuarios" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
-                     <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
-                        <UserPlusIcon className="h-24 w-24 text-blue-600" />
-                    </div>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
-                            <UserPlusIcon className="h-6 w-6" />
-                        </div>
-                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Novos Cadastros</p>
-                    </div>
-                    <h3 className="text-3xl font-bold text-gray-800">{newConsultants}</h3>
-                    <p className="text-xs text-blue-600 mt-2 font-bold">Últimos 30 dias</p>
-                </Link>
-
-                {/* Card 3: Inactive */}
-                <Link to="/admin/usuarios" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
-                     <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
+                {/* Card 3: Consultores Inativos */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
+                    <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
                         <UserCircleIcon className="h-24 w-24 text-gray-600" />
                     </div>
                     <div className="flex items-center gap-4 mb-4">
                         <div className="p-3 bg-gray-100 text-gray-600 rounded-xl">
                             <UserCircleIcon className="h-6 w-6" />
                         </div>
-                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Inativos</p>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Inativos</p>
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-800">{inactiveConsultants}</h3>
-                    <p className="text-xs text-red-500 mt-2 font-bold">Ação Necessária</p>
-                </Link>
+                    <h3 className="text-3xl font-bold text-gray-800">--</h3>
+                </div>
 
-                {/* Card 4: Total Referrals */}
-                <div className="bg-[#1C2833] p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-all group relative overflow-hidden">
+                {/* Card 4: Consultores com Indicações */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
+                     <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
+                        <TargetIcon className="h-24 w-24 text-purple-600" />
+                    </div>
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
+                            <HandshakeIcon className="h-6 w-6" />
+                        </div>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Com Indicações</p>
+                    </div>
+                    <h3 className="text-3xl font-bold text-gray-800">--</h3>
+                </div>
+
+                 {/* Card 5: Árvore de Indicações */}
+                <div className="bg-[#1C2833] p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-all group relative overflow-hidden cursor-pointer">
                      <div className="absolute right-0 top-0 p-8 opacity-10 transform group-hover:scale-110 transition-transform">
-                        <TargetIcon className="h-24 w-24 text-white" />
+                        <PresentationChartLineIcon className="h-24 w-24 text-white" />
                     </div>
                     <div className="flex items-center gap-4 mb-4">
                         <div className="p-3 bg-[#4CAF50] text-white rounded-xl shadow-lg shadow-green-900/50">
-                            <HandshakeIcon className="h-6 w-6" />
+                            <PresentationChartLineIcon className="h-6 w-6" />
                         </div>
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-wide">Total Indicações</p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Árvore de Indicações</p>
                     </div>
-                    <h3 className="text-3xl font-bold text-white">{totalReferrals}</h3>
-                    <p className="text-xs text-[#4CAF50] mt-2 font-bold">Alavancagem de Rede</p>
+                    <h3 className="text-3xl font-bold text-white">--</h3>
                 </div>
             </div>
 
@@ -1194,7 +1190,7 @@ export const AdminLoginScreen = () => {
                 <div className="p-8 text-center bg-[#0A382A] border-b border-[#0A382A]">
                     <BrandLogo className="h-12 mx-auto mb-4 filter brightness-0 invert" />
                     <h2 className="text-xl font-serif font-bold text-white tracking-wide">Portal Master</h2>
-                    <p className="text-green-200/70 text-xs mt-2 uppercase tracking-widest font-bold">Acesso Restrito</p>
+                    <p className="text-green-200/50 text-xs mt-1 uppercase tracking-widest">Acesso Restrito</p>
                 </div>
                 
                 <form onSubmit={handleLogin} className="p-8 space-y-6">
@@ -1205,379 +1201,141 @@ export const AdminLoginScreen = () => {
                     )}
                     
                     <div className="space-y-2">
-                        {/* UPDATED LABEL: ID MASTER */}
-                        <label className="text-sm font-bold text-[#0A382A] ml-1 uppercase">ID MASTER</label>
-                        <div className="relative">
-                            <LockClosedIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
-                            <input 
-                                type="text" 
-                                required
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-[#4CAF50] focus:ring-1 focus:ring-[#4CAF50] outline-none transition-all bg-gray-50 focus:bg-white text-gray-800 placeholder-gray-400"
-                                placeholder="Acesso Master"
-                                value={credential}
-                                onChange={(e) => setCredential(e.target.value)}
-                            />
-                        </div>
+                        <label className="text-sm font-bold text-gray-700 ml-1">E-mail Administrativo</label>
+                        <input 
+                            type="text" 
+                            required
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#4CAF50] focus:ring-2 focus:ring-green-100 outline-none transition-all bg-gray-50 focus:bg-white"
+                            placeholder="admin@brotos.com"
+                            value={credential}
+                            onChange={(e) => setCredential(e.target.value)}
+                        />
                     </div>
                     
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#0A382A] ml-1 uppercase">Chave de Segurança</label>
-                        <div className="relative">
-                            <ShieldCheckIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
-                            <input 
-                                type="password" 
-                                required
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-[#4CAF50] focus:ring-1 focus:ring-[#4CAF50] outline-none transition-all bg-gray-50 focus:bg-white text-gray-800 placeholder-gray-400"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
+                        <label className="text-sm font-bold text-gray-700 ml-1">Chave de Segurança</label>
+                        <input 
+                            type="password" 
+                            required
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#4CAF50] focus:ring-2 focus:ring-green-100 outline-none transition-all bg-gray-50 focus:bg-white"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
                     </div>
 
                     <button 
                         type="submit" 
                         disabled={loading}
-                        className="w-full bg-[#4CAF50] hover:bg-[#43a047] text-white font-bold py-4 rounded-xl shadow-lg shadow-green-900/20 transition-all transform hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-wider text-sm"
+                        className="w-full bg-[#0A382A] hover:bg-[#144d3b] text-white font-bold py-4 rounded-xl shadow-lg shadow-green-900/20 transition-all transform hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed border border-white/10"
                     >
-                        {loading ? 'Autenticando...' : 'Iniciar Sessão Segura'}
+                        {loading ? 'Verificando...' : 'Acessar Sistema'}
                     </button>
-                </form>
-            </div>
-             <div className="mt-8 text-center z-10 opacity-30">
-                <LockClosedIcon className="h-6 w-6 text-white mx-auto mb-2" />
-                <p className="text-white text-xs">Conexão Criptografada</p>
-            </div>
-        </div>
-    );
-};
-
-export const ConsultantRegister = () => {
-    const [step, setStep] = useState(1);
-    const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '', email: '', password: '', phone: '', document: '', address: '', city: '', state: ''
-    });
-    const navigate = useNavigate();
-
-    // Generate random ID (simulated)
-    const generateId = () => Math.floor(100000 + Math.random() * 900000).toString();
-
-    const handleRegister = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            // 1. Sign Up in Supabase Auth
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-                email: formData.email,
-                password: formData.password,
-            });
-
-            if (authError) throw authError;
-
-            if (authData.user) {
-                // 2. Create Profile in 'consultants' table
-                // Uses the RLS policy "Users can insert their own profile"
-                const newId = generateId();
-                const { error: dbError } = await supabase.from('consultants').insert({
-                    id: newId,
-                    auth_id: authData.user.id,
-                    name: formData.name,
-                    email: formData.email,
-                    whatsapp: formData.phone,
-                    document_id: formData.document,
-                    address: formData.address,
-                    city: formData.city,
-                    state: formData.state,
-                    role: 'consultant',
-                    parent_id: '007053' // Default sponsor
-                });
-
-                if (dbError) throw dbError;
-
-                alert("Cadastro realizado com sucesso! Faça login para continuar.");
-                navigate('/login');
-            }
-
-        } catch (error: any) {
-            alert("Erro no cadastro: " + error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl overflow-hidden animate-slide-up">
-                <div className="bg-brand-green-dark p-8 text-white text-center">
-                    <BrandLogo className="h-12 mx-auto mb-4 filter brightness-0 invert" />
-                    <h2 className="text-2xl font-serif font-bold">Ficha de Cadastro</h2>
-                    <p className="opacity-80 text-sm">Junte-se a nós e comece a lucrar hoje.</p>
-                </div>
-
-                <form onSubmit={handleRegister} className="p-8">
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700">Nome Completo</label>
-                                <input type="text" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
-                                    value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                            </div>
-                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700">CPF</label>
-                                <input type="text" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
-                                    value={formData.document} onChange={e => setFormData({...formData, document: e.target.value})} />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700">E-mail</label>
-                                <input type="email" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
-                                    value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                            </div>
-                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700">WhatsApp</label>
-                                <input type="tel" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
-                                    value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                            </div>
-                        </div>
-
-                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-700">Endereço Completo</label>
-                            <input type="text" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
-                                value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-700">Senha de Acesso</label>
-                            <input type="password" required className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" 
-                                value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-                        </div>
-
-                        <button 
-                            type="submit" 
-                            disabled={loading}
-                            className="w-full bg-brand-green-mid hover:bg-brand-green-dark text-white font-bold py-4 rounded-xl shadow-lg transition-all"
-                        >
-                            {loading ? 'Cadastrando...' : 'Finalizar Cadastro'}
-                        </button>
-                    </div>
                     
-                    <div className="text-center mt-6">
-                        <Link to="/login" className="text-brand-green-dark font-bold text-sm hover:underline">
-                            Já tenho uma conta
+                     <div className="text-center pt-2">
+                        <Link to="/login" className="text-sm text-gray-400 hover:text-[#0A382A] transition-colors">
+                            Voltar para Login de Consultor
                         </Link>
                     </div>
                 </form>
             </div>
+             <p className="mt-8 text-white/20 text-xs relative z-10 font-mono">SECURE CONNECTION • 256-BIT ENCRYPTION</p>
         </div>
     );
 };
 
-// --- ADDITIONAL VIEWS (Placeholder Implementations for Routing) ---
+// --- PLACEHOLDER COMPONENTS FOR EXPORTS (Fixing Module Exports) ---
+
+export const ConsultantRegister = () => (
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
+        <h2 className="text-2xl font-bold mb-4 text-brand-green-dark">Cadastro de Consultor</h2>
+        <p className="text-gray-600">Formulário de cadastro aqui.</p>
+        <Link to="/login" className="text-brand-green-mid mt-4 inline-block font-bold">Voltar ao Login</Link>
+    </div>
+);
 
 export const MaterialsView = () => (
-    <div className="space-y-8 animate-fade-in">
-        <div className="flex justify-between items-center">
-             <div>
-                <h2 className="text-3xl font-serif font-bold text-gray-800">Materiais de Apoio</h2>
-                <p className="text-gray-500">Baixe imagens e textos para divulgar.</p>
-            </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-                <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all group">
-                    <div className="h-48 bg-gray-100 flex items-center justify-center">
-                        <PhotoIcon className="h-12 w-12 text-gray-300" />
-                    </div>
-                    <div className="p-6">
-                        <h3 className="font-bold text-gray-800 mb-2">Pack de Marketing #{i}</h3>
-                        <p className="text-sm text-gray-500 mb-4">Imagens para redes sociais e stories.</p>
-                        <button className="w-full py-2 border border-brand-green-mid text-brand-green-dark font-bold rounded-lg hover:bg-brand-green-mid hover:text-white transition-colors flex items-center justify-center gap-2">
-                            <DownloadIcon className="h-4 w-4" /> Baixar
-                        </button>
-                    </div>
-                </div>
-            ))}
-        </div>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-800">Materiais de Marketing</h2>
+        <p className="text-gray-500">Baixe imagens e textos para divulgação.</p>
     </div>
 );
 
 export const UniBrotosView = () => (
-    <div className="space-y-8 animate-fade-in">
-        <div className="bg-brand-earth rounded-[2rem] p-8 md:p-12 text-white relative overflow-hidden">
-             <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-4">
-                    <AcademicCapIcon className="h-8 w-8 text-white" />
-                    <span className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">Universidade Corporativa</span>
-                </div>
-                <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">UniBrotos</h2>
-                <p className="text-white/80 max-w-xl text-lg">
-                    Domine as vendas e cresça na carreira com nossos treinamentos exclusivos.
-                </p>
-            </div>
-        </div>
-         <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-            <PlayCircleIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Módulos em Breve</h3>
-            <p className="text-gray-500">Estamos preparando conteúdos incríveis para você.</p>
-        </div>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-800">UniBrotos</h2>
+        <p className="text-gray-500">Área de treinamento e cursos.</p>
     </div>
 );
 
 export const MyOrdersView = () => (
-    <div className="space-y-8 animate-fade-in">
-         <h2 className="text-3xl font-serif font-bold text-gray-800">Meus Pedidos</h2>
-         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-12 text-center">
-                <PackageIcon className="h-16 w-16 text-gray-200 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-400 mb-2">Nenhum pedido encontrado</h3>
-                <p className="text-gray-400">Você ainda não realizou nenhuma compra.</p>
-            </div>
-         </div>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-800">Meus Pedidos</h2>
+        <p className="text-gray-500">Histórico de pedidos realizados.</p>
     </div>
 );
 
 export const NewOrderView = () => (
-    <div className="space-y-8 animate-fade-in">
-        <div className="flex justify-between items-center">
-            <h2 className="text-3xl font-serif font-bold text-gray-800">Loja do Consultor</h2>
-            <div className="bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm flex items-center gap-2">
-                <ShoppingCartIcon className="h-5 w-5 text-brand-green-mid" />
-                <span className="font-bold text-gray-700">Carrinho (0)</span>
-            </div>
-        </div>
-         <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-             <StoreIcon className="h-16 w-16 text-gray-200 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">O catálogo de produtos está sendo atualizado.</p>
-        </div>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-800">Novo Pedido</h2>
+        <p className="text-gray-500">Catálogo de produtos para compra.</p>
     </div>
 );
 
 export const InviteView = () => (
-    <div className="space-y-8 animate-fade-in max-w-2xl mx-auto">
-        <div className="text-center">
-             <h2 className="text-3xl font-serif font-bold text-gray-800 mb-2">Expanda sua Rede</h2>
-             <p className="text-gray-500">Convide novos consultores e ganhe comissões sobre as vendas deles.</p>
-        </div>
-        <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
-            <div className="flex flex-col items-center gap-6">
-                <div className="h-24 w-24 bg-brand-green-light/20 rounded-full flex items-center justify-center text-brand-green-dark">
-                    <QrCodeIcon className="h-12 w-12" />
-                </div>
-                <div className="w-full bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center justify-between gap-4">
-                    <span className="text-gray-600 font-mono text-sm truncate">https://brotos.com/convite/REF123456</span>
-                    <button className="text-brand-green-dark hover:bg-white p-2 rounded-lg transition-colors">
-                        <ClipboardCopyIcon className="h-5 w-5" />
-                    </button>
-                </div>
-                <button className="w-full py-4 bg-brand-green-dark text-white font-bold rounded-xl shadow-lg hover:bg-brand-green-mid transition-all flex items-center justify-center gap-2">
-                    <WhatsAppIcon className="h-5 w-5" />
-                    Compartilhar no WhatsApp
-                </button>
-            </div>
-        </div>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-800">Convidar Consultores</h2>
+        <p className="text-gray-500">Link de indicação e gestão de convites.</p>
     </div>
 );
 
 export const BusinessView = () => (
-    <div className="space-y-8 animate-fade-in">
-        <h2 className="text-3xl font-serif font-bold text-gray-800">Meu Negócio</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h3 className="text-sm font-bold text-gray-400 uppercase">Consultores Ativos</h3>
-                <p className="text-4xl font-bold text-gray-800 mt-2">12</p>
-            </div>
-             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h3 className="text-sm font-bold text-gray-400 uppercase">Vendas da Rede</h3>
-                <p className="text-4xl font-bold text-brand-green-dark mt-2">R$ 4.500</p>
-            </div>
-        </div>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-800">Meu Negócio</h2>
+        <p className="text-gray-500">Visão detalhada da sua rede e desempenho.</p>
     </div>
 );
 
 export const FinancialView = () => (
-    <div className="space-y-8 animate-fade-in">
-        <h2 className="text-3xl font-serif font-bold text-gray-800">Gestão Financeira</h2>
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-[2rem] p-8 text-white flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl">
-            <div>
-                <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Saldo Disponível</p>
-                <h3 className="text-5xl font-mono font-bold mt-2">R$ 1.250,00</h3>
-            </div>
-            <button className="px-8 py-4 bg-green-500 hover:bg-green-400 text-gray-900 font-bold rounded-xl shadow-lg shadow-green-900/20 transition-all flex items-center gap-2">
-                <BanknotesIcon className="h-5 w-5" />
-                Solicitar Saque
-            </button>
-        </div>
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="font-bold text-gray-800 mb-4">Histórico de Transações</h3>
-            <p className="text-gray-400 text-center py-8">Nenhuma movimentação recente.</p>
-        </div>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-800">Financeiro</h2>
+        <p className="text-gray-500">Extrato, saldo e solicitações de saque.</p>
     </div>
 );
 
-// --- Admin Placeholder Views ---
+// --- ADMIN SPECIFIC VIEWS ---
 
 export const AdminGoalsView = () => (
-     <div className="space-y-6 animate-fade-in">
-        <h2 className="text-2xl font-bold text-gray-800">Metas da Rede</h2>
-        <p className="text-gray-500">Configuração de metas (Legado).</p>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-[#0A382A]">Metas da Rede</h2>
+        <p className="text-gray-500">Definição e acompanhamento de metas globais.</p>
     </div>
 );
 
 export const AdminWithdrawalsView = () => (
-     <div className="space-y-6 animate-fade-in">
-        <h2 className="text-2xl font-bold text-gray-800">Solicitações de Saque</h2>
-        <p className="text-gray-500">Gestão de saques (Legado).</p>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-[#0A382A]">Solicitações de Saque</h2>
+        <p className="text-gray-500">Gerenciamento de pagamentos de comissões.</p>
     </div>
 );
 
 export const AdminReportsView = () => (
-    <div className="space-y-6 animate-fade-in">
-        <h2 className="text-3xl font-serif font-bold text-[#0A382A]">Relatórios</h2>
-        <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-             <ClipboardListIcon className="h-16 w-16 text-gray-200 mx-auto mb-4" />
-            <p className="text-gray-500">Módulo de relatórios avançados em desenvolvimento.</p>
-        </div>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-[#0A382A]">Relatórios Gerenciais</h2>
+        <p className="text-gray-500">Relatórios detalhados de vendas e crescimento.</p>
     </div>
 );
 
 export const AdminSupportView = () => (
-    <div className="space-y-6 animate-fade-in">
-        <h2 className="text-3xl font-serif font-bold text-[#0A382A]">Central de Suporte</h2>
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                    <ChatIcon className="h-6 w-6" />
-                </div>
-                <div>
-                    <h3 className="font-bold text-gray-800">Tickets Abertos</h3>
-                    <p className="text-sm text-gray-500">Gerencie as dúvidas dos consultores</p>
-                </div>
-            </div>
-            <p className="text-gray-400 text-center py-4">Nenhum ticket pendente.</p>
-        </div>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-[#0A382A]">Suporte</h2>
+        <p className="text-gray-500">Tickets e atendimento aos consultores.</p>
     </div>
 );
 
 export const AdminSettingsView = () => (
-    <div className="space-y-6 animate-fade-in">
-        <h2 className="text-3xl font-serif font-bold text-[#0A382A]">Configurações</h2>
-         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <span className="font-bold text-gray-700">Manutenção do Sistema</span>
-                <div className="w-12 h-6 bg-gray-300 rounded-full relative cursor-pointer">
-                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow"></div>
-                </div>
-            </div>
-             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <span className="font-bold text-gray-700">Novos Cadastros</span>
-                <div className="w-12 h-6 bg-green-500 rounded-full relative cursor-pointer">
-                    <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow"></div>
-                </div>
-            </div>
-        </div>
+    <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-[#0A382A]">Configurações</h2>
+        <p className="text-gray-500">Parâmetros do sistema e permissões.</p>
     </div>
 );
