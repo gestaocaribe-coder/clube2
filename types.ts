@@ -18,6 +18,7 @@ export interface Consultant {
     role: ConsultantRole; // 'tipo_usuario'
     parent_id?: string; // 'id_convidante'
     created_at: string;
+    status?: 'Ativo' | 'Inativo' | 'Pendente'; // Status for metrics
 }
 
 export interface DashboardContextType {

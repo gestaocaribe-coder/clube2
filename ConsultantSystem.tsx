@@ -501,6 +501,58 @@ const OrganizationChartIconPlaceholder = ({ className }: { className?: string })
 );
 
 export const AdminOverviewView = () => {
+    // State for real metrics
+    const [stats, setStats] = useState({
+        newConsultants: 0,
+        activeConsultants: 0,
+        inactiveConsultants: 0,
+        leadersWithReferrals: 0
+    });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                // 1. Total Active
+                const { count: active } = await supabase
+                    .from('consultants')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'Ativo'); 
+
+                // 2. Total Inactive
+                const { count: inactive } = await supabase
+                    .from('consultants')
+                    .select('*', { count: 'exact', head: true })
+                    .neq('status', 'Ativo');
+
+                // 3. New Last 30 Days
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                const { count: newUsers } = await supabase
+                    .from('consultants')
+                    .select('*', { count: 'exact', head: true })
+                    .gte('created_at', thirtyDaysAgo.toISOString());
+
+                // 4. Leaders (Simulated for now based on role 'leader')
+                const { count: leaders } = await supabase
+                    .from('consultants')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('role', 'leader');
+
+                setStats({
+                    newConsultants: newUsers || 0,
+                    activeConsultants: active || 0,
+                    inactiveConsultants: inactive || 0,
+                    leadersWithReferrals: leaders || 0
+                });
+
+            } catch (e) {
+                console.error("Error fetching admin stats", e);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
     return (
         <div className="space-y-8 animate-slide-up">
             <div className="flex justify-between items-end">
@@ -520,7 +572,7 @@ export const AdminOverviewView = () => {
                 {[
                     { title: 'Produtividade Alta', value: '85%', sub: '+2.4% vs mês anterior', icon: TrendingUpIcon, color: 'text-green-600', bg: 'bg-green-50' },
                     { title: 'Últimos 30 dias', value: 'R$ 145.2k', sub: 'Volume de Vendas', icon: CalendarIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { title: 'Inativos', value: '12', sub: 'Risco de Churn', icon: UsersIcon, color: 'text-red-600', bg: 'bg-red-50' },
+                    { title: 'Inativos', value: `${stats.inactiveConsultants}`, sub: 'Risco de Churn', icon: UsersIcon, color: 'text-red-600', bg: 'bg-red-50' },
                     { title: 'Total Indicações', value: '1.240', sub: 'Rede em crescimento', icon: UserPlusIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
                 ].map((kpi, idx) => (
                     <div key={idx} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
@@ -541,11 +593,11 @@ export const AdminOverviewView = () => {
             {/* NEW KPI Grid (5 New Cards) */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
                 {[
-                    { title: 'Novos Consultores', subtitle: 'últimos 30 dias', value: '--', icon: UserPlusIcon },
-                    { title: 'Consultores Ativos', subtitle: 'Total', value: '--', icon: CheckCircleIcon },
-                    { title: 'Consultores Inativos', subtitle: 'Total', value: '--', icon: UsersIcon },
-                    { title: 'Consultores com Indicações', subtitle: 'Líderes', value: '--', icon: HandshakeIcon },
-                    { title: 'Árvore de Indicações', subtitle: 'Visualizar', value: '--', icon: OrganizationChartIconPlaceholder }, // Using placeholder or generic icon
+                    { title: 'Novos Consultores', subtitle: 'últimos 30 dias', value: stats.newConsultants.toString(), icon: UserPlusIcon },
+                    { title: 'Consultores Ativos', subtitle: 'Total', value: stats.activeConsultants.toString(), icon: CheckCircleIcon },
+                    { title: 'Consultores Inativos', subtitle: 'Total', value: stats.inactiveConsultants.toString(), icon: UsersIcon },
+                    { title: 'Consultores com Indicações', subtitle: 'Líderes', value: stats.leadersWithReferrals.toString(), icon: HandshakeIcon },
+                    { title: 'Árvore de Indicações', subtitle: 'Visualizar', value: 'Ver Rede', icon: OrganizationChartIconPlaceholder },
                 ].map((card, idx) => (
                     <div key={idx} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start">
