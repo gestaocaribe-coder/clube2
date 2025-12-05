@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
+import { NewConsultantsTable } from './NewConsultantsTable';
+import { SideRanking } from './SideRanking';
 import { 
     BrandLogo, 
     MenuIcon, 
@@ -613,6 +615,16 @@ export const AdminOverviewView = () => {
                     </div>
                 ))}
             </div>
+
+            {/* NEW SECTION: Table and Ranking */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                    <NewConsultantsTable />
+                </div>
+                <div className="lg:col-span-1">
+                    <SideRanking />
+                </div>
+            </div>
         </div>
     );
 };
@@ -1071,7 +1083,7 @@ export const LoginScreen = () => {
                 <div className="text-center mb-8">
                     <BrandLogo className="h-12 mx-auto mb-4" />
                     <h2 className="text-2xl font-serif font-bold">Portal do Consultor</h2>
-                    <p className="text-gray-500 text-sm mt-2">Acesse sua área exclusiva</p>
+                    <p className="text-gray-500 text-sm mt-2">Acesso sua área exclusiva</p>
                 </div>
                 
                 {errorMsg && (
