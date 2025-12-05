@@ -545,35 +545,6 @@ export const AdminOverviewView = () => {
                     </div>
                 ))}
             </div>
-
-            {/* Revenue Simulator Section */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-900">Simulador de Crescimento da Receita</h3>
-                        <p className="text-sm text-gray-500">Projeção baseada na taxa atual de recrutamento</p>
-                    </div>
-                    <div className="flex bg-gray-100 p-1 rounded-lg">
-                        <button className="px-3 py-1 bg-white rounded-md text-xs font-bold shadow-sm text-gray-800">Mensal</button>
-                        <button className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-700">Trimestral</button>
-                    </div>
-                </div>
-                
-                <div className="h-64 flex items-end justify-between gap-2 px-2">
-                    {[35, 42, 45, 50, 48, 55, 62, 68, 75, 80, 85, 92].map((h, i) => (
-                        <div key={i} className="w-full bg-brand-green-light rounded-t-sm relative group">
-                            <div 
-                                style={{ height: `${h}%` }} 
-                                className="absolute bottom-0 left-0 right-0 bg-brand-green-mid/80 rounded-t-sm group-hover:bg-brand-green-mid transition-colors"
-                            ></div>
-                        </div>
-                    ))}
-                </div>
-                <div className="flex justify-between mt-4 text-xs text-gray-400 font-medium uppercase tracking-wider">
-                    <span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span><span>Jun</span>
-                    <span>Jul</span><span>Ago</span><span>Set</span><span>Out</span><span>Nov</span><span>Dez</span>
-                </div>
-            </div>
         </div>
     );
 };
