@@ -227,7 +227,7 @@ export const DashboardShell = ({ children, consultant }: { children?: React.Reac
 
     const handleLogout = async () => {
         // Check if user was admin to redirect correctly
-        const wasAdmin = localStorage.getItem('sb-admin-session');
+        const wasAdmin = localStorage.getItem('sb-admin-session') || consultant?.role === 'admin';
         
         await supabase.auth.signOut();
         localStorage.removeItem('sb-admin-session'); // Clear simulated session
@@ -1005,17 +1005,47 @@ export const LoginScreen = () => {
 export const AdminLoginScreen = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
 
-    const handleAdminLogin = (e: React.FormEvent) => {
+    const handleAdminLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // Simulate admin login
-        setTimeout(() => {
-            // Set a simulated session token for the ProtectedRoute to find
-            localStorage.setItem('sb-admin-session', 'true');
-            navigate('/admin/dashboard');
+        setErrorMsg('');
+
+        try {
+            // 1. Try Real Supabase Auth
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (data.session) {
+                // Login successful, now check role in DB or via metadata if set
+                // We will rely on ProtectedRoute to fetch the profile and verify 'admin' role
+                navigate('/admin/dashboard');
+                return;
+            }
+
+            // 2. Fallback: Simulated Admin (Only if specific credentials are used for dev/demo)
+            // This is kept for backward compatibility if backend isn't ready
+            if (email === 'admin' && password === 'root') {
+                 localStorage.setItem('sb-admin-session', 'true');
+                 navigate('/admin/dashboard');
+                 return;
+            }
+
+            if (error) {
+                setErrorMsg('Credenciais inválidas ou acesso não autorizado.');
+                console.error('Login error:', error.message);
+            }
+
+        } catch (err) {
+            setErrorMsg('Erro de conexão. Tente novamente.');
+        } finally {
             setLoading(false);
-        }, 1000);
+        }
     };
 
     return (
@@ -1028,14 +1058,33 @@ export const AdminLoginScreen = () => {
                     <h2 className="text-2xl font-serif font-bold text-white">Portal Master</h2>
                     <p className="text-gray-400 text-sm mt-2">Acesso restrito à administração</p>
                 </div>
+                
+                {errorMsg && (
+                    <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm text-center">
+                        {errorMsg}
+                    </div>
+                )}
+
                 <form onSubmit={handleAdminLogin} className="space-y-4">
                     <div className="relative">
                         <UserCircleIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-500" />
-                        <input type="text" placeholder="ID Admin" className="w-full pl-12 pr-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-brand-green-mid focus:ring-1 focus:ring-brand-green-mid" />
+                        <input 
+                            type="text" 
+                            placeholder="E-mail de Administrador" 
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-brand-green-mid focus:ring-1 focus:ring-brand-green-mid" 
+                        />
                     </div>
                     <div className="relative">
                         <LockClosedIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-500" />
-                        <input type="password" placeholder="Senha Forte" className="w-full pl-12 pr-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-brand-green-mid focus:ring-1 focus:ring-brand-green-mid" />
+                        <input 
+                            type="password" 
+                            placeholder="Senha de Acesso" 
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-brand-green-mid focus:ring-1 focus:ring-brand-green-mid" 
+                        />
                     </div>
                     <button disabled={loading} className="w-full bg-brand-green-mid hover:bg-brand-green-mid/90 text-white py-3 rounded-lg font-bold transition-all shadow-lg shadow-brand-green-mid/20 disabled:opacity-50">
                         {loading ? 'Validando Credenciais...' : 'Acessar Sistema'}

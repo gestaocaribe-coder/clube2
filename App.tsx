@@ -40,27 +40,13 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
                 // 2. Check for Simulated Admin Session (Dev/Demo Mode)
                 const isSimulatedAdmin = localStorage.getItem('sb-admin-session') === 'true';
 
+                // If no session at all, stop loading and let it redirect
                 if (!session && !isSimulatedAdmin) {
                     setLoading(false);
                     return;
                 }
 
-                if (isSimulatedAdmin) {
-                    // Mock Admin Profile
-                    setUser({
-                        id: 'admin-root',
-                        auth_id: 'admin-root-auth',
-                        name: 'Administrador Master',
-                        email: 'root@brotosdaterra.com.br',
-                        whatsapp: '00000000000',
-                        role: 'admin',
-                        created_at: new Date().toISOString()
-                    });
-                    setLoading(false);
-                    return;
-                }
-
-                // Check consultant profile from DB if real session exists
+                // If Real Session exists, fetch profile from DB
                 if (session) {
                     const { data: consultant, error } = await supabase
                         .from('consultants')
@@ -70,9 +56,21 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
 
                     if (consultant) {
                         setUser(consultant as Consultant);
-                    } else if (error) {
-                        console.error("Error fetching consultant profile", error);
+                    } else {
+                        console.error("Profile not found for user", error);
                     }
+                } 
+                // Fallback to Simulated Admin if no real session but local flag is set
+                else if (isSimulatedAdmin) {
+                    setUser({
+                        id: 'admin-root',
+                        auth_id: 'admin-root-auth',
+                        name: 'Administrador Master',
+                        email: 'root@brotosdaterra.com.br',
+                        whatsapp: '00000000000',
+                        role: 'admin',
+                        created_at: new Date().toISOString()
+                    });
                 }
             } catch (error) {
                 console.error("Auth check failed", error);
@@ -94,30 +92,32 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
 
     if (!user) {
         // Redirect to appropriate login based on attempted route
-        const target = location.pathname.startsWith('/admin') ? '/portal-master' : '/login';
+        const target = location.pathname.startsWith('/admin') || location.pathname.startsWith('/portal-master') 
+            ? '/portal-master' 
+            : '/login';
         return <Navigate to={target} state={{ from: location }} replace />;
     }
 
     // Role Logic
-    // Admin access: 'admin'
-    // Consultant access: 'consultant', 'leader' (and 'admin' typically can view consultant views, but we separate them here for cleaner UX)
-    
-    const isAllowed = allowedRoles.includes(user.role) || (allowedRoles.includes('leader') && user.role === 'admin');
+    const userRole = user.role;
 
-    // Strict separation redirect logic
-    // If an Admin tries to go to /consultor, send them to /admin
-    if (user.role === 'admin' && location.pathname.startsWith('/consultor')) {
+    // Strict separation: If Admin tries to access Consultor area -> redirect to Admin
+    if (userRole === 'admin' && location.pathname.startsWith('/consultor')) {
         return <Navigate to="/admin/dashboard" replace />;
     }
     
-    // If a Consultant tries to go to /admin, send them to /consultor
-    if (user.role !== 'admin' && location.pathname.startsWith('/admin')) {
+    // Strict separation: If Consultant tries to access Admin area -> redirect to Consultor
+    if (userRole !== 'admin' && location.pathname.startsWith('/admin')) {
          return <Navigate to="/consultor/dashboard" replace />;
     }
 
-    // If roles don't match the route requirement (generic fallback)
-    if (!allowedRoles.includes(user.role) && !(user.role === 'admin' && allowedRoles.includes('leader'))) {
-         const target = user.role === 'admin' ? '/admin/dashboard' : '/consultor/dashboard';
+    // Check if user has permission for this specific route
+    // Admin has access to everything in 'admin' routes.
+    // Consultant/Leader has access to 'consultant' routes.
+    const isAllowed = allowedRoles.includes(userRole) || (userRole === 'admin' && allowedRoles.includes('admin'));
+
+    if (!isAllowed) {
+         const target = userRole === 'admin' ? '/admin/dashboard' : '/consultor/dashboard';
          return <Navigate to={target} replace />;
     }
 
