@@ -24,7 +24,7 @@ import {
     ClipboardCopyIcon,
     UserPlusIcon, 
     CurrencyDollarIcon,
-    TagIcon,
+    TagIcon, 
     CalculatorIcon,
     PlayCircleIcon,
     SparklesIcon,
@@ -45,14 +45,10 @@ import {
     BellIcon,
     ChatIcon,
     ClipboardListIcon,
-    ShieldCheckIcon
+    ShieldCheckIcon,
+    ShareIcon
 } from './components/Icons';
-import { Consultant, ConsultantStats, Sale, Notification, PrivateCustomer, PrivateSale, Material, Lesson, Order, Withdrawal, GoalMetric } from './types';
-
-// --- Context Type for Outlet ---
-type DashboardContextType = {
-    consultant: Consultant;
-};
+import { Consultant, Order, DashboardContextType } from './types';
 
 // --- Helper Functions ---
 const formatCurrency = (value: number) => {
@@ -63,7 +59,6 @@ const formatCurrency = (value: number) => {
 };
 
 // --- DATA SOURCE (Simulating API Response) ---
-// In production, this would be replaced by a fetch to Supabase
 const DB_LOCAL_STATE = {
     team: [
         { id: '007053', name: 'Cleide Maia', role: 'Consultor', status: 'Ativo', sales: 'R$ 1.250,00', phone: '5511999999999', email: 'cleide@email.com', address: 'Rua das Flores, 123', city: 'São Paulo', state: 'SP', doc: '123.456.789-00', joinDate: '2023-10-01', invitedBy: '000000' },
@@ -104,381 +99,384 @@ const OrderDetailsModal = ({ order, onClose }: { order: Order, onClose: () => vo
                             <h3 className="text-2xl font-serif font-bold text-brand-green-dark">Pedido #{order.id}</h3>
                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
                                 order.status === 'Entregue' ? 'bg-green-100 text-green-700 border-green-200' :
-                                order.status === 'Em trânsito' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                                'bg-gray-100 text-gray-700 border-gray-200'
+                                order.status === 'Enviado' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                'bg-yellow-100 text-yellow-700 border-yellow-200'
                             }`}>
                                 {order.status}
                             </span>
                         </div>
-                        <p className="text-gray-500 text-sm font-medium mt-1">Realizado em {order.date}</p>
+                        <p className="text-sm text-gray-500 mt-1">Realizado em {order.date}</p>
                     </div>
                     <button 
                         onClick={onClose}
-                        className="h-10 w-10 bg-white rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400 hover:text-gray-600"
                     >
-                        <CloseIcon className="h-5 w-5" />
+                        <CloseIcon className="h-6 w-6" />
                     </button>
                 </div>
 
                 <div className="p-8 overflow-y-auto custom-scrollbar">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                        <div className="md:col-span-2 space-y-6">
-                            <h4 className="text-sm font-extrabold text-gray-400 uppercase tracking-widest mb-4">Itens do Pedido</h4>
-                            <div className="flex gap-4 p-4 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all">
-                                <div className="h-20 w-20 bg-white rounded-xl p-2 border border-gray-100 shrink-0">
-                                    <img src="https://i.imgur.com/yNKoBxr.png" alt="Product" className="w-full h-full object-contain" />
+                    <div className="space-y-8">
+                        {/* Status Steps */}
+                        <div className="relative">
+                            <div className="absolute left-0 top-1/2 w-full h-1 bg-gray-100 -translate-y-1/2 rounded-full"></div>
+                            <div className={`absolute left-0 top-1/2 w-3/4 h-1 bg-brand-green-mid -translate-y-1/2 rounded-full transition-all duration-1000`}></div>
+                            <div className="relative flex justify-between">
+                                {['Confirmado', 'Em Separação', 'Enviado', 'Entregue'].map((step, i) => (
+                                    <div key={step} className="flex flex-col items-center gap-2 bg-white px-2">
+                                        <div className={`w-4 h-4 rounded-full border-2 ${i < 3 ? 'bg-brand-green-mid border-brand-green-mid' : 'bg-white border-gray-300'}`}></div>
+                                        <span className={`text-xs font-medium ${i < 3 ? 'text-brand-green-dark' : 'text-gray-400'}`}>{step}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Items */}
+                        <div>
+                            <h4 className="font-serif font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <PackageIcon className="h-5 w-5 text-brand-green-mid" />
+                                Itens do Pedido
+                            </h4>
+                            <div className="bg-gray-50 rounded-xl p-4 flex gap-4">
+                                <div className="w-20 h-20 bg-white rounded-lg border border-gray-200 p-2 flex items-center justify-center">
+                                    <img src="https://i.imgur.com/ntlcx07.png" alt="Produto" className="w-full h-full object-contain" />
                                 </div>
                                 <div className="flex-1">
-                                    <h5 className="font-bold text-gray-800">Caixa Pomada Canela de Velho</h5>
-                                    <p className="text-sm text-gray-500 mb-2">Display com 12 Unidades</p>
-                                    <div className="flex justify-between items-end">
-                                        <span className="text-sm font-medium bg-white px-2 py-1 rounded border border-gray-200">
-                                            Qtd: {qty}
-                                        </span>
-                                        <span className="font-bold text-brand-green-dark">{formatCurrency(subtotal)}</span>
+                                    <h5 className="font-medium text-gray-900">Kit Pomadas Terapêuticas - Alívio Natural</h5>
+                                    <p className="text-sm text-gray-500 mt-1">Quantidade: {qty} caixas (12 un. cada)</p>
+                                    <p className="text-brand-green-dark font-bold mt-2">{formatCurrency(unitPrice)} <span className="text-xs font-normal text-gray-400">/un</span></p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-bold text-gray-900">{formatCurrency(subtotal)}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Shipping & Payment */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <h4 className="font-serif font-bold text-gray-900 flex items-center gap-2">
+                                    <TruckIcon className="h-5 w-5 text-brand-green-mid" />
+                                    Endereço de Entrega
+                                </h4>
+                                <div className="bg-white border border-gray-100 rounded-xl p-4 text-sm text-gray-600 leading-relaxed shadow-sm">
+                                    <p className="font-medium text-gray-900 mb-1">Consultora Brotos da Terra</p>
+                                    <p>Rua das Flores, 123 - Sala 4</p>
+                                    <p>Jardim Botânico</p>
+                                    <p>Curitiba - PR</p>
+                                    <p>CEP: 80000-000</p>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <h4 className="font-serif font-bold text-gray-900 flex items-center gap-2">
+                                    <CreditCardIcon className="h-5 w-5 text-brand-green-mid" />
+                                    Resumo Financeiro
+                                </h4>
+                                <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Subtotal</span>
+                                        <span>{formatCurrency(subtotal)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Frete</span>
+                                        <span>{shipping === 0 ? 'Grátis' : formatCurrency(shipping)}</span>
+                                    </div>
+                                    <div className="pt-2 mt-2 border-t border-gray-200 flex justify-between font-bold text-lg text-brand-green-dark">
+                                        <span>Total</span>
+                                        <span>{order.total}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <div className="space-y-6">
-                             <h4 className="text-sm font-extrabold text-gray-400 uppercase tracking-widest mb-4">Resumo</h4>
-                             <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-3">
-                                <div className="flex justify-between text-sm text-gray-600">
-                                    <span>Subtotal</span>
-                                    <span>{formatCurrency(subtotal)}</span>
-                                </div>
-                                <div className="flex justify-between text-sm text-gray-600">
-                                    <span>Frete</span>
-                                    <span>{shipping === 0 ? 'Grátis' : formatCurrency(shipping)}</span>
-                                </div>
-                                <div className="border-t border-gray-200 pt-3 flex justify-between font-bold text-lg text-brand-green-dark">
-                                    <span>Total</span>
-                                    <span>{order.total}</span>
-                                </div>
-                             </div>
-                        </div>
                     </div>
                 </div>
                 
-                <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
-                    <button className="px-6 py-3 bg-brand-green-mid hover:bg-brand-green-dark text-white rounded-xl font-bold shadow-lg shadow-green-200 transition-all flex items-center gap-2">
-                        <WhatsAppIcon className="h-5 w-5" />
-                        Falar com Suporte sobre este Pedido
-                    </button>
+                <div className="bg-gray-50 px-8 py-4 border-t border-gray-100 flex justify-end gap-3">
+                     <button className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+                        Ajuda com Pedido
+                     </button>
+                     <button className="px-6 py-2.5 bg-brand-green-mid text-white font-medium rounded-xl hover:bg-brand-green-dark transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        Rastrear Entrega
+                     </button>
                 </div>
             </div>
         </div>
     );
 };
 
-const ConsultantDetailsModal = ({ consultant, onClose }: { consultant: any, onClose: () => void }) => {
-    if (!consultant) return null;
+// --- Dashboard Shell (Layout) ---
+export const DashboardShell = ({ children, consultant }: { children?: React.ReactNode, consultant?: Consultant }) => {
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    // Determine current section for header title
+    const getPageTitle = () => {
+        const path = location.pathname;
+        if (path.includes('dashboard')) return 'Visão Geral';
+        if (path.includes('materiais')) return 'Materiais de Apoio';
+        if (path.includes('unibrotos')) return 'UniBrotos';
+        if (path.includes('meus-pedidos')) return 'Meus Pedidos';
+        if (path.includes('novo-pedido')) return 'Novo Pedido';
+        if (path.includes('convidar')) return 'Convite';
+        if (path.includes('meu-negocio')) return 'Meu Negócio';
+        if (path.includes('financeiro')) return 'Financeiro';
+        if (path.includes('admin')) return 'Portal Master';
+        return 'Brotos da Terra';
+    };
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        navigate('/login');
+    };
+
+    // Define menu items based on role
+    const getMenuItems = () => {
+        if (consultant?.role === 'admin') {
+            return [
+                { icon: ChartBarIcon, label: 'Visão Geral', path: '/admin/dashboard' },
+                { icon: UsersIcon, label: 'Usuários', path: '/admin/usuarios' },
+                { icon: BriefcaseIcon, label: 'Negócio', path: '/admin/negocio' },
+                { icon: BanknotesIcon, label: 'Financeiro', path: '/admin/financeiro' },
+                { icon: PresentationChartLineIcon, label: 'Relatórios', path: '/admin/relatorios' },
+                { icon: ShieldCheckIcon, label: 'Suporte', path: '/admin/suporte' },
+                { icon: LockClosedIcon, label: 'Configurações', path: '/admin/config' },
+            ];
+        }
+        
+        // Default consultant/leader menu
+        return [
+            { icon: ChartBarIcon, label: 'Visão Geral', path: '/consultor/dashboard' },
+            { icon: UsersIcon, label: 'Meu Negócio', path: '/consultor/meu-negocio' }, // New Business View
+            { icon: AcademicCapIcon, label: 'UniBrotos', path: '/consultor/unibrotos' },
+            { icon: PhotoIcon, label: 'Materiais', path: '/consultor/materiais' },
+            { icon: ShoppingCartIcon, label: 'Novo Pedido', path: '/consultor/novo-pedido' },
+            { icon: PackageIcon, label: 'Meus Pedidos', path: '/consultor/meus-pedidos' },
+            { icon: BanknotesIcon, label: 'Financeiro', path: '/consultor/financeiro' },
+            { icon: UserPlusIcon, label: 'Convidar', path: '/consultor/convidar' },
+        ];
+    };
+
+    const menuItems = getMenuItems();
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
-            <div className="bg-white rounded-[2rem] w-full max-w-2xl relative z-10 overflow-hidden shadow-2xl flex flex-col">
-                <div className="bg-[#0A382A] px-8 py-6 flex justify-between items-center text-white">
+        <div className="flex h-screen bg-gray-50 overflow-hidden">
+            {/* Mobile Sidebar Backdrop */}
+            {sidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
+            {/* Sidebar */}
+            <aside className={`
+                fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-100 shadow-xl lg:shadow-none transform transition-transform duration-300 ease-in-out flex flex-col
+                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            `}>
+                <div className="h-24 flex items-center justify-center border-b border-gray-50 bg-white">
+                    <BrandLogo className="h-10 w-auto" />
+                </div>
+
+                <div className="p-6">
+                    <div className="bg-brand-green-light rounded-2xl p-4 flex items-center gap-3 mb-6 border border-brand-green-mid/10">
+                        <div className="h-12 w-12 rounded-full bg-brand-green-mid text-white flex items-center justify-center font-bold text-lg shadow-md">
+                            {consultant?.name?.charAt(0) || 'U'}
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="font-bold text-gray-900 truncate">{consultant?.name || 'Usuário'}</p>
+                            <p className="text-xs text-brand-green-mid font-medium uppercase tracking-wider">{consultant?.role || 'Consultor'}</p>
+                        </div>
+                    </div>
+
+                    <nav className="space-y-1.5">
+                        {menuItems.map((item) => {
+                            const isActive = location.pathname === item.path;
+                            return (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={() => setSidebarOpen(false)}
+                                    className={`
+                                        flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group
+                                        ${isActive 
+                                            ? 'bg-brand-green-mid text-white shadow-lg shadow-brand-green-mid/20 font-medium' 
+                                            : 'text-gray-500 hover:bg-gray-50 hover:text-brand-green-dark font-medium'
+                                        }
+                                    `}
+                                >
+                                    <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-brand-green-mid'}`} />
+                                    <span>{item.label}</span>
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                </div>
+
+                <div className="mt-auto p-6 border-t border-gray-50">
+                     <button 
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors w-full font-medium"
+                    >
+                        <LogoutIcon className="h-5 w-5" />
+                        <span>Sair do Sistema</span>
+                    </button>
+                    <p className="text-xs text-center text-gray-300 mt-4">v{1.0}</p>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50 relative">
+                {/* Header */}
+                <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 h-20 flex items-center justify-between px-6 sticky top-0 z-30">
                     <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-white/10 rounded-full flex items-center justify-center font-bold text-xl border border-white/20">
-                            {consultant.name.charAt(0)}
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-serif font-bold">{consultant.name}</h3>
-                            <p className="text-green-200/70 text-sm">ID: {consultant.id}</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="h-8 w-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20">
-                        <CloseIcon className="h-4 w-4" />
-                    </button>
-                </div>
-                <div className="p-8 space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Status</p>
-                            <span className={`px-2 py-1 rounded text-sm font-bold ${consultant.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {consultant.status}
-                            </span>
-                        </div>
-                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Nível</p>
-                            <p className="font-bold text-gray-800">{consultant.role}</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <h4 className="text-sm font-bold text-brand-green-dark uppercase tracking-widest border-b border-gray-100 pb-2">Dados de Contato</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div>
-                                <p className="text-xs text-gray-400">E-mail</p>
-                                <p className="font-medium text-gray-800">{consultant.email}</p>
-                            </div>
-                             <div>
-                                <p className="text-xs text-gray-400">Telefone / WhatsApp</p>
-                                <p className="font-medium text-gray-800">{consultant.phone}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <h4 className="text-sm font-bold text-brand-green-dark uppercase tracking-widest border-b border-gray-100 pb-2">Documentação & Endereço</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div>
-                                <p className="text-xs text-gray-400">CPF/CNPJ</p>
-                                <p className="font-medium text-gray-800">{consultant.doc || 'Não informado'}</p>
-                            </div>
-                             <div>
-                                <p className="text-xs text-gray-400">Endereço</p>
-                                <p className="font-medium text-gray-800">{consultant.address || 'Não informado'}</p>
-                                <p className="text-sm text-gray-600">{consultant.city} - {consultant.state}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                     <div className="pt-4 flex gap-4">
-                        <button className="flex-1 py-3 bg-brand-green-mid text-white rounded-xl font-bold shadow hover:bg-brand-green-dark transition">
-                            Enviar Mensagem
+                        <button 
+                            onClick={() => setSidebarOpen(true)}
+                            className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+                        >
+                            <MenuIcon />
                         </button>
-                        <button className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition">
-                            Editar Cadastro
+                        <h1 className="text-xl font-serif font-bold text-gray-800 hidden md:block">
+                            {getPageTitle()}
+                        </h1>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <button className="relative p-2 text-gray-400 hover:text-brand-green-mid hover:bg-gray-50 rounded-full transition-colors">
+                            <BellIcon className="h-6 w-6" />
+                            <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-white"></span>
                         </button>
-                     </div>
+                        <div className="h-8 w-px bg-gray-200 mx-2 hidden md:block"></div>
+                        <div className="hidden md:flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                             <CalendarIcon className="h-4 w-4" />
+                             <span>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                        </div>
+                    </div>
+                </header>
+
+                {/* Scrollable Content Area */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar relative">
+                    <div className="max-w-7xl mx-auto space-y-8 pb-20">
+                        {children}
+                    </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 };
 
-// --- NEW COMPONENT: RevenueGrowthSimulator (Strategic Admin Tool) ---
-
-const RevenueGrowthSimulator = () => {
-    // State for the sliders (Inputs)
-    const [newConsultantsGoal, setNewConsultantsGoal] = useState(50);
-    const [activationRateGoal, setActivationRateGoal] = useState(15); // Percentage
-    const [ticketAverageGoal, setTicketAverageGoal] = useState(250);
-
-    // Business Logic: Calculate Estimated Monthly Revenue
-    // Formula: (Active Base + New Consultants) * Activation Rate * Ticket Average
-    // *Simplified for simulation purposes*
-    
-    // Get real base numbers from DB_LOCAL_STATE
-    const currentTotalConsultants = DB_LOCAL_STATE.team.length; 
-    
-    // Logic: 
-    // Total Potential Active = Current Base + New Goal
-    // Active Users = Total Potential * (Activation Rate / 100)
-    // Revenue = Active Users * Ticket Average
-    
-    const totalPotentialBase = 500 + newConsultantsGoal; // Assuming 500 base for simulation scale + goal
-    const activeUsers = Math.floor(totalPotentialBase * (activationRateGoal / 100));
-    const estimatedRevenue = activeUsers * ticketAverageGoal;
-
-    return (
-        <div className="bg-[#0A382A] rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-green-900/30 border border-white/5">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 relative z-10">
-                <div className="flex items-center gap-4">
-                     <div className="p-3 bg-[#4CAF50] rounded-2xl shadow-lg shadow-green-500/20">
-                        <PresentationChartLineIcon className="h-8 w-8 text-white" />
-                     </div>
-                     <div>
-                         <h3 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-white">Simulador de Crescimento da Receita</h3>
-                         <p className="text-green-100/60 text-sm mt-1">Projeção estratégica baseada em métricas de rede.</p>
-                     </div>
-                </div>
-                <div className="bg-white/5 px-6 py-3 rounded-xl border border-white/5 text-right">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-green-300">Receita Mensal Estimada</p>
-                    <p className="text-3xl font-mono font-bold text-white">{formatCurrency(estimatedRevenue)}</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 relative z-10">
-                {/* Inputs Section */}
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Slider 1: New Consultants */}
-                    <div>
-                        <div className="flex justify-between mb-2">
-                            <label className="text-sm font-bold text-green-100 flex items-center gap-2">
-                                <UserPlusIcon className="h-4 w-4" /> Meta de Novos Consultores / Mês
-                            </label>
-                            <span className="font-mono text-[#4CAF50] font-bold">{newConsultantsGoal} un.</span>
-                        </div>
-                        <input 
-                            type="range" min="10" max="500" step="10"
-                            value={newConsultantsGoal}
-                            onChange={(e) => setNewConsultantsGoal(parseInt(e.target.value))}
-                            className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#4CAF50]"
-                        />
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>10</span>
-                            <span>Expansão da Base</span>
-                            <span>500</span>
-                        </div>
-                    </div>
-
-                    {/* Slider 2: Activation Rate */}
-                    <div>
-                        <div className="flex justify-between mb-2">
-                            <label className="text-sm font-bold text-green-100 flex items-center gap-2">
-                                <TargetIcon className="h-4 w-4" /> Meta de Ativação / Mês
-                            </label>
-                            <span className="font-mono text-[#4CAF50] font-bold">{activationRateGoal}%</span>
-                        </div>
-                        <input 
-                            type="range" min="5" max="100" step="5"
-                            value={activationRateGoal}
-                            onChange={(e) => setActivationRateGoal(parseInt(e.target.value))}
-                            className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#4CAF50]"
-                        />
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>5%</span>
-                            <span>Produtividade</span>
-                            <span>100%</span>
-                        </div>
-                    </div>
-
-                    {/* Slider 3: Ticket Average */}
-                    <div>
-                        <div className="flex justify-between mb-2">
-                            <label className="text-sm font-bold text-green-100 flex items-center gap-2">
-                                <BanknotesIcon className="h-4 w-4" /> Ticket Médio Alvo
-                            </label>
-                            <span className="font-mono text-[#4CAF50] font-bold">{formatCurrency(ticketAverageGoal)}</span>
-                        </div>
-                        <input 
-                            type="range" min="100" max="1000" step="50"
-                            value={ticketAverageGoal}
-                            onChange={(e) => setTicketAverageGoal(parseInt(e.target.value))}
-                            className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#4CAF50]"
-                        />
-                         <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>R$ 100</span>
-                            <span>Valor da Venda</span>
-                            <span>R$ 1.000</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Scenarios / Output */}
-                <div className="bg-white/5 rounded-3xl p-6 border border-white/5 flex flex-col justify-center gap-4">
-                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400 text-center mb-2">Cenários Projetados</p>
-                    
-                    <div className={`p-4 rounded-xl border transition-all ${estimatedRevenue < 50000 ? 'bg-white/10 border-[#4CAF50] shadow-lg' : 'bg-transparent border-white/5 opacity-50'}`}>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-gray-300">Conservador</span>
-                            <span className="font-mono font-bold text-white">~R$ 35k</span>
-                        </div>
-                    </div>
-
-                    <div className={`p-4 rounded-xl border transition-all ${estimatedRevenue >= 50000 && estimatedRevenue < 150000 ? 'bg-white/10 border-[#4CAF50] shadow-lg' : 'bg-transparent border-white/5 opacity-50'}`}>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-gray-300">Ideal</span>
-                            <span className="font-mono font-bold text-white">~R$ 100k</span>
-                        </div>
-                    </div>
-
-                    <div className={`p-4 rounded-xl border transition-all ${estimatedRevenue >= 150000 ? 'bg-white/10 border-[#4CAF50] shadow-lg' : 'bg-transparent border-white/5 opacity-50'}`}>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-gray-300">Agressivo</span>
-                            <span className="font-mono font-bold text-white">R$ 150k+</span>
-                        </div>
-                    </div>
-
-                    <button className="mt-4 w-full py-3 bg-[#4CAF50] text-[#0A382A] font-bold rounded-xl hover:bg-green-400 transition-colors shadow-lg">
-                        Aplicar Metas
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// --- VIEWS ---
+// ==========================================
+// VIEWS (PAGES)
+// ==========================================
 
 export const OverviewView = () => {
     const { consultant } = useOutletContext<DashboardContextType>();
-    const [recentSales, setRecentSales] = useState<Sale[]>([]);
-
-    useEffect(() => {
-        // Mock fetch recent sales
-        const mockSales = [
-            { id: 101, consultant_id: consultant.id, quantity: 2, total_amount: 420.00, created_at: '2023-10-25' },
-            { id: 102, consultant_id: consultant.id, quantity: 1, total_amount: 210.00, created_at: '2023-10-20' },
-        ];
-        setRecentSales(mockSales);
-    }, [consultant.id]);
-
+    
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Header / Welcome */}
-            <div className="bg-gradient-to-r from-brand-green-dark to-brand-green-mid rounded-[2rem] p-8 md:p-12 text-white shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/4 blur-3xl"></div>
+        <div className="space-y-8 animate-slide-up">
+            {/* Welcome Banner */}
+            <div className="relative bg-gradient-to-r from-brand-green-dark to-brand-green-mid rounded-3xl p-8 md:p-12 text-white overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-2xl -ml-12 -mb-12"></div>
+                
                 <div className="relative z-10 max-w-2xl">
-                    <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-                        Olá, {consultant.name.split(' ')[0]}! 🌱
+                    <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium mb-4 border border-white/10">
+                        <SparklesIcon className="h-3 w-3" />
+                        <span>Painel do Consultor</span>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4 leading-tight">
+                        Bem-vindo(a) de volta, <br/>{consultant?.name?.split(' ')[0]}!
                     </h2>
-                    <p className="text-green-50 text-lg md:text-xl font-light leading-relaxed">
-                        Sua jornada de sucesso continua. Você já impactou vidas hoje?
+                    <p className="text-brand-green-light/90 text-lg mb-8 leading-relaxed">
+                        Sua jornada de sucesso continua. Você tem 3 novos pedidos pendentes de envio e 2 novos materiais de treinamento disponíveis.
                     </p>
-                    <div className="mt-8 flex gap-4">
-                        <Link to="/consultor/novo-pedido" className="px-6 py-3 bg-white text-brand-green-dark rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center gap-2">
+                    <div className="flex flex-wrap gap-4">
+                        <button className="bg-white text-brand-green-dark px-6 py-3 rounded-xl font-bold hover:bg-brand-green-light transition-colors shadow-lg flex items-center gap-2">
                             <ShoppingCartIcon className="h-5 w-5" />
                             Novo Pedido
-                        </Link>
-                         <Link to="/consultor/materiais" className="px-6 py-3 bg-brand-green-dark bg-opacity-30 border border-white/20 backdrop-blur-sm text-white rounded-xl font-bold hover:bg-opacity-40 transition-all flex items-center gap-2">
-                            <SparklesIcon className="h-5 w-5" />
-                            Divulgar
-                        </Link>
+                        </button>
+                        <button className="bg-brand-green-dark/30 backdrop-blur-sm text-white border border-white/30 px-6 py-3 rounded-xl font-medium hover:bg-brand-green-dark/50 transition-colors flex items-center gap-2">
+                            <ShareIcon className="h-5 w-5" />
+                            Compartilhar Loja
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-green-100 text-brand-green-dark rounded-xl">
-                            <TrendingUpIcon className="h-6 w-6" />
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                {[
+                    { label: 'Vendas Mês', value: 'R$ 2.450,00', icon: BanknotesIcon, color: 'text-green-600', bg: 'bg-green-50' },
+                    { label: 'Lucro Estimado', value: 'R$ 890,00', icon: TrendingUpIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
+                    { label: 'Pedidos Ativos', value: '3', icon: PackageIcon, color: 'text-orange-600', bg: 'bg-orange-50' },
+                    { label: 'Clientes', value: '12', icon: UsersIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
+                ].map((stat, idx) => (
+                    <div key={idx} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
+                                <stat.icon className="h-6 w-6" />
+                            </div>
+                            <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-full">+12%</span>
                         </div>
-                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Vendas no Mês</p>
+                        <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
+                        <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-800">R$ 1.250,00</h3>
-                    <p className="text-xs text-green-600 font-bold mt-2 bg-green-50 inline-block px-2 py-1 rounded">+15% vs mês anterior</p>
-                </div>
-                
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
-                            <BanknotesIcon className="h-6 w-6" />
-                        </div>
-                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Lucro Estimado</p>
+                ))}
+            </div>
+
+            {/* Recent Orders & UniBrotos Teaser */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Recent Orders List */}
+                <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+                        <h3 className="font-serif font-bold text-gray-900">Pedidos Recentes</h3>
+                        <Link to="/consultor/meus-pedidos" className="text-sm text-brand-green-mid font-medium hover:text-brand-green-dark">Ver todos</Link>
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-800">R$ 625,00</h3>
-                    <p className="text-xs text-gray-400 mt-2">Margem de 100%</p>
+                    <div className="divide-y divide-gray-50">
+                        {[1, 2, 3].map((orderId) => (
+                            <div key={orderId} className="p-4 md:p-6 hover:bg-gray-50 transition-colors flex items-center justify-between group">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                                        <PackageIcon className="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-gray-900">Pedido #{202400 + orderId}</p>
+                                        <p className="text-xs text-gray-500">12/03/2024 • 3 itens</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-bold text-brand-green-dark">R$ 450,00</p>
+                                    <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded-full mt-1">
+                                        Entregue
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
-                            <UsersIcon className="h-6 w-6" />
-                        </div>
-                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Novos Clientes</p>
-                    </div>
-                    <h3 className="text-3xl font-bold text-gray-800">12</h3>
-                    <p className="text-xs text-purple-600 font-bold mt-2 bg-purple-50 inline-block px-2 py-1 rounded">+4 essa semana</p>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-orange-100 text-orange-600 rounded-xl">
+                {/* UniBrotos Card */}
+                <div className="bg-brand-dark-card text-white rounded-2xl p-6 shadow-xl flex flex-col justify-between relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-brand-green-dark/50 group-hover:bg-brand-green-dark/40 transition-colors"></div>
+                    <img src="https://images.unsplash.com/photo-1544367563-12123d8965cd?q=80&w=2070&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-50" alt="Training" />
+                    
+                    <div className="relative z-10">
+                        <div className="bg-white/10 backdrop-blur-md w-12 h-12 rounded-xl flex items-center justify-center mb-4 border border-white/20">
                             <AcademicCapIcon className="h-6 w-6" />
                         </div>
-                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Aulas Assistidas</p>
+                        <h3 className="text-xl font-bold font-serif mb-2">UniBrotos</h3>
+                        <p className="text-gray-300 text-sm mb-6">Aprenda novas técnicas de venda e aprofunde seu conhecimento sobre os produtos.</p>
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-800">8/12</h3>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 mt-3">
-                        <div className="bg-orange-400 h-1.5 rounded-full" style={{ width: '66%' }}></div>
+                    
+                    <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
+                        <p className="text-xs font-medium text-brand-green-mid mb-2 uppercase tracking-wider">Em progresso</p>
+                        <p className="font-bold text-sm mb-2">Módulo 2: Abordagem Eficiente</p>
+                        <div className="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-brand-green-mid w-2/3 h-full rounded-full"></div>
+                        </div>
+                        <button className="w-full mt-4 py-2 bg-white text-brand-dark-bg text-xs font-bold rounded-lg hover:bg-gray-100 transition-colors">
+                            Continuar Estudando
+                        </button>
                     </div>
                 </div>
             </div>
@@ -487,855 +485,585 @@ export const OverviewView = () => {
 };
 
 export const AdminOverviewView = () => {
-    // ADMIN DASHBOARD
-    // Logic disabled for layout task as requested.
-
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Header Date Info */}
-            <div className="flex justify-between items-center px-2">
+        <div className="space-y-8 animate-slide-up">
+            <div className="flex justify-between items-end">
                 <div>
-                     {/* PERSONALIZED ADMIN GREETING */}
-                     <h2 className="text-2xl md:text-3xl font-serif font-bold text-[#0A382A]">Olá, Administrador 👋</h2>
-                     <p className="text-gray-500 text-sm">Visão global e estratégica da rede.</p>
+                    <h2 className="text-2xl font-serif font-bold text-gray-900">Visão Geral Master</h2>
+                    <p className="text-gray-500">Métricas globais e desempenho da rede.</p>
                 </div>
-                <span className="text-gray-400 text-sm italic hidden md:block">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-            </div>
-
-            {/* NETWORK SUMMARY CARDS (5 Cards Layout) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-                 {/* Card 1: Novos Consultores (últimos 30 dias) */}
-                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
-                    <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
-                        <UserPlusIcon className="h-24 w-24 text-blue-600" />
-                    </div>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
-                            <UserPlusIcon className="h-6 w-6" />
-                        </div>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Novos (30d)</p>
-                    </div>
-                    <h3 className="text-3xl font-bold text-gray-800">--</h3>
-                </div>
-
-                {/* Card 2: Consultores Ativos */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
-                    <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
-                        <CheckCircleIcon className="h-24 w-24 text-[#0A382A]" />
-                    </div>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-green-100 text-[#0A382A] rounded-xl">
-                            <UsersIcon className="h-6 w-6" />
-                        </div>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Ativos</p>
-                    </div>
-                    <h3 className="text-3xl font-bold text-[#0A382A]">--</h3>
-                </div>
-
-                {/* Card 3: Consultores Inativos */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
-                    <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
-                        <UserCircleIcon className="h-24 w-24 text-gray-600" />
-                    </div>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-gray-100 text-gray-600 rounded-xl">
-                            <UserCircleIcon className="h-6 w-6" />
-                        </div>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Inativos</p>
-                    </div>
-                    <h3 className="text-3xl font-bold text-gray-800">--</h3>
-                </div>
-
-                {/* Card 4: Consultores com Indicações */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
-                     <div className="absolute right-0 top-0 p-8 opacity-5 transform group-hover:scale-110 transition-transform">
-                        <TargetIcon className="h-24 w-24 text-purple-600" />
-                    </div>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
-                            <HandshakeIcon className="h-6 w-6" />
-                        </div>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Com Indicações</p>
-                    </div>
-                    <h3 className="text-3xl font-bold text-gray-800">--</h3>
-                </div>
-
-                 {/* Card 5: Árvore de Indicações */}
-                <div className="bg-[#1C2833] p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-all group relative overflow-hidden cursor-pointer">
-                     <div className="absolute right-0 top-0 p-8 opacity-10 transform group-hover:scale-110 transition-transform">
-                        <PresentationChartLineIcon className="h-24 w-24 text-white" />
-                    </div>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-[#4CAF50] text-white rounded-xl shadow-lg shadow-green-900/50">
-                            <PresentationChartLineIcon className="h-6 w-6" />
-                        </div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Árvore de Indicações</p>
-                    </div>
-                    <h3 className="text-3xl font-bold text-white">--</h3>
-                </div>
-            </div>
-
-            {/* REVENUE GROWTH SIMULATOR (Replacing Ranking) */}
-            <RevenueGrowthSimulator />
-        </div>
-    );
-};
-
-export const AdminPanelView = () => {
-    // This view manages the "Administração" / "Usuarios" route
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedConsultant, setSelectedConsultant] = useState<any | null>(null);
-
-    const filteredTeam = DB_LOCAL_STATE.team.filter(c => 
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        c.id.includes(searchTerm) ||
-        c.status.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    return (
-        <div className="space-y-8 animate-fade-in">
-             <div className="bg-gradient-to-br from-brand-dark-bg to-brand-dark-card text-white rounded-[2rem] p-8 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
-                <div>
-                    <h2 className="text-3xl font-serif font-bold mb-2">Administração de Usuários</h2>
-                    <p className="text-gray-400">Gerencie todos os consultores, visualize cadastros e status.</p>
-                </div>
-                <div className="flex gap-4">
-                     <div className="relative">
-                        <input 
-                            type="text" 
-                            placeholder="Buscar por Nome, ID ou Status" 
-                            className="pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 w-full md:w-80"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        <SearchIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
-                     </div>
-                </div>
-             </div>
-
-             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                 <table className="w-full text-left">
-                     <thead className="bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="p-6 text-sm font-bold text-gray-500 uppercase tracking-wider">Consultor</th>
-                            <th className="p-6 text-sm font-bold text-gray-500 uppercase tracking-wider">Contato</th>
-                            <th className="p-6 text-sm font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="p-6 text-sm font-bold text-gray-500 uppercase tracking-wider">Vendas (Mês)</th>
-                            <th className="p-6 text-sm font-bold text-gray-500 uppercase tracking-wider text-right">Ação</th>
-                        </tr>
-                     </thead>
-                     <tbody className="divide-y divide-gray-50">
-                        {filteredTeam.map((member) => (
-                            <tr key={member.id} className="hover:bg-green-50/30 transition-colors group">
-                                <td className="p-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-600 border border-gray-200">
-                                            {member.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-gray-800">{member.name}</p>
-                                            <p className="text-xs text-gray-500">ID: {member.id} • {member.role}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="p-6">
-                                    <p className="text-sm text-gray-600">{member.email}</p>
-                                    <p className="text-xs text-gray-400">{member.phone}</p>
-                                </td>
-                                <td className="p-6">
-                                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${
-                                        member.status === 'Ativo' 
-                                            ? 'bg-green-100 text-green-700 border-green-200' 
-                                            : 'bg-red-50 text-red-600 border-red-100'
-                                    }`}>
-                                        {member.status}
-                                    </span>
-                                </td>
-                                <td className="p-6 font-mono font-bold text-brand-green-dark">{member.sales}</td>
-                                <td className="p-6 text-right">
-                                    <button 
-                                        onClick={() => setSelectedConsultant(member)}
-                                        className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-600 hover:text-brand-green-dark hover:border-brand-green-mid shadow-sm transition-all"
-                                    >
-                                        Ver Ficha
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                     </tbody>
-                 </table>
-                 {filteredTeam.length === 0 && (
-                     <div className="p-12 text-center text-gray-500">
-                         Nenhum consultor encontrado.
-                     </div>
-                 )}
-             </div>
-
-             {/* Consultant Details Modal */}
-             {selectedConsultant && (
-                 <ConsultantDetailsModal consultant={selectedConsultant} onClose={() => setSelectedConsultant(null)} />
-             )}
-        </div>
-    );
-};
-
-// --- LAYOUT COMPONENTS ---
-
-const SidebarItem = ({ icon: Icon, label, to, active, onClick, adminMode }: { icon: any, label: string, to?: string, active?: boolean, onClick?: () => void, adminMode?: boolean }) => {
-    const navigate = useNavigate();
-
-    const handleClick = () => {
-        if (onClick) onClick();
-        if (to) navigate(to);
-    };
-
-    // New "Elevate" Design System for Sidebar Items
-    // Pill shape, high contrast
-    
-    // Base classes common to both
-    const baseClasses = "w-full flex items-center gap-4 px-6 py-4 rounded-full transition-all duration-200 group relative overflow-hidden";
-    
-    let activeClasses = "";
-    let inactiveClasses = "";
-
-    if (adminMode) {
-        // --- Admin Green Theme ---
-        // Active: White background, Green text, Shadow
-        activeClasses = "bg-white text-[#0A382A] shadow-md font-bold";
-        // Inactive: Transparent, White text with opacity
-        inactiveClasses = "text-white/70 hover:bg-white/10 hover:text-white font-medium";
-    } else {
-        // --- Consultant Dark Theme (Legacy/Standard) ---
-        activeClasses = "bg-brand-green-dark text-white shadow-lg shadow-green-900/20";
-        inactiveClasses = "text-gray-400 hover:bg-white/5 hover:text-white";
-    }
-
-    return (
-        <button 
-            onClick={handleClick}
-            className={`${baseClasses} ${active ? activeClasses : inactiveClasses}`}
-        >
-            <Icon className={`h-6 w-6 z-10 relative ${
-                active 
-                    ? (adminMode ? 'text-[#0A382A]' : 'text-brand-green-mid') 
-                    : 'text-current'
-            }`} />
-            <span className="z-10 relative">{label}</span>
-        </button>
-    );
-};
-
-export const DashboardShell = ({ consultant, children }: { consultant: Consultant, children?: React.ReactNode }) => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const navigate = useNavigate();
-    const location = useLocation();
-
-    const isAdmin = consultant.role === 'admin';
-    const basePath = isAdmin ? '/admin' : '/consultor';
-    
-    // Check active states
-    const isActive = (path: string) => location.pathname.includes(path);
-
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        navigate('/login');
-    };
-
-    // --- Sidebar Background Color (Design Specification) ---
-    // Admin: #0A382A (Deep Green)
-    // Consultant: brand-dark-bg (Dark Slate)
-    const sidebarBg = isAdmin ? 'bg-[#0A382A]' : 'bg-brand-dark-bg';
-    const mainBg = isAdmin ? 'bg-[#F9F9F9]' : 'bg-gray-50';
-
-    return (
-        <div className={`min-h-screen ${mainBg} flex font-sans`}>
-            {/* Mobile Sidebar Overlay */}
-            {sidebarOpen && (
-                <div 
-                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
-
-            {/* Sidebar */}
-            <aside className={`
-                fixed lg:sticky top-0 left-0 z-50 h-screen w-[280px] ${sidebarBg} shadow-2xl transition-transform duration-300 ease-out flex flex-col
-                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-            `}>
-                {/* 1. Brand Logo Area */}
-                <div className="p-8 flex items-center justify-center">
-                     <div className="w-full bg-white rounded-2xl py-4 px-6 shadow-lg flex justify-center items-center">
-                        <img src="https://i.imgur.com/ntlcx07.png" alt="Brotos Logo" className="h-10" />
-                     </div>
-                     <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white absolute top-4 right-4">
-                        <CloseIcon />
+                <div className="flex gap-2">
+                    <button className="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
+                        Exportar Relatório
                     </button>
                 </div>
+            </div>
 
-                {/* 2. Admin Profile Card (Elevate Design) */}
-                <div className="px-6 mb-8 text-center">
-                    <div className="flex flex-col items-center">
-                        <div className={`h-20 w-20 ${isAdmin ? 'bg-[#d4a373] text-[#0A382A]' : 'bg-brand-green-dark text-white'} rounded-full flex items-center justify-center font-bold text-3xl shadow-xl mb-4 border-4 border-white/10`}>
-                            {consultant.name.charAt(0)}
-                        </div>
-                        <h2 className="text-white font-bold text-lg leading-tight mb-1">{consultant.name}</h2>
-                        <p className="text-white/50 text-xs font-mono mb-3">ID: {consultant.id}</p>
-                        
-                        <div className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest ${isAdmin ? 'bg-[#4CAF50] text-white shadow-lg shadow-green-900/40' : 'bg-gray-800 text-gray-400'}`}>
-                            {consultant.role === 'admin' ? 'ADMINISTRADOR' : consultant.role.toUpperCase()}
-                        </div>
-                    </div>
-                </div>
-
-                {/* 3. Navigation Menu */}
-                <div className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar">
-                    
-                    {isAdmin ? (
-                        // --- ADMIN MENU (CLEAN STRUCTURE - ELEVATE SPEC) ---
-                        <>
-                             <div className={`px-6 mt-4 mb-2 text-[10px] font-extrabold uppercase tracking-widest text-white/30`}>
-                                Gerenciamento Central
+            {/* Standard KPI Grid (Existing) */}
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                    { title: 'Produtividade Alta', value: '85%', sub: '+2.4% vs mês anterior', icon: TrendingUpIcon, color: 'text-green-600', bg: 'bg-green-50' },
+                    { title: 'Últimos 30 dias', value: 'R$ 145.2k', sub: 'Volume de Vendas', icon: CalendarIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
+                    { title: 'Inativos', value: '12', sub: 'Risco de Churn', icon: UsersIcon, color: 'text-red-600', bg: 'bg-red-50' },
+                    { title: 'Total Indicações', value: '1.240', sub: 'Rede em crescimento', icon: UserPlusIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
+                ].map((kpi, idx) => (
+                    <div key={idx} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">{kpi.title}</p>
+                                <h3 className="text-2xl font-bold text-gray-900 mt-1">{kpi.value}</h3>
                             </div>
-
-                            <SidebarItem 
-                                icon={ChartBarIcon} 
-                                label="Dashboard Gerencial" 
-                                to={`${basePath}/dashboard`}
-                                active={isActive('/dashboard')}
-                                adminMode={isAdmin}
-                            />
-                             <SidebarItem 
-                                icon={BriefcaseIcon} 
-                                label="Meu Negócio" 
-                                to={`${basePath}/negocio`}
-                                active={isActive('/negocio')}
-                                adminMode={isAdmin} 
-                            />
-                             <SidebarItem 
-                                icon={LockClosedIcon} 
-                                label="Administração" 
-                                to={`${basePath}/usuarios`}
-                                active={isActive('/usuarios')}
-                                adminMode={isAdmin} 
-                            />
-
-                            <div className={`px-6 mt-8 mb-2 text-[10px] font-extrabold uppercase tracking-widest text-white/30`}>
-                                Relatórios e Finanças
+                            <div className={`p-2 rounded-lg ${kpi.bg} ${kpi.color}`}>
+                                <kpi.icon className="h-5 w-5" />
                             </div>
+                        </div>
+                        <p className={`text-xs ${kpi.color.replace('text-', 'text-opacity-80 ')} font-medium`}>{kpi.sub}</p>
+                    </div>
+                ))}
+            </div>
 
-                            <SidebarItem 
-                                icon={BanknotesIcon} 
-                                label="Financeiro" 
-                                to={`${basePath}/financeiro`}
-                                active={isActive('/financeiro')}
-                                adminMode={isAdmin} 
-                            />
-                            <SidebarItem 
-                                icon={ClipboardListIcon} 
-                                label="Relatórios" 
-                                to={`${basePath}/relatorios`}
-                                active={isActive('/relatorios')}
-                                adminMode={isAdmin} 
-                            />
-
-                            <div className={`px-6 mt-8 mb-2 text-[10px] font-extrabold uppercase tracking-widest text-white/30`}>
-                                Sistema e Suporte
+            {/* NEW KPI Grid (5 New Cards) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                {[
+                    { title: 'Novos Consultores', subtitle: 'últimos 30 dias', value: '--', icon: UserPlusIcon },
+                    { title: 'Consultores Ativos', subtitle: 'Total', value: '--', icon: CheckCircleIcon },
+                    { title: 'Consultores Inativos', subtitle: 'Total', value: '--', icon: UsersIcon },
+                    { title: 'Consultores com Indicações', subtitle: 'Líderes', value: '--', icon: HandshakeIcon },
+                    { title: 'Árvore de Indicações', subtitle: 'Visualizar', value: '--', icon: OrganizationChartIconPlaceholder }, // Using placeholder or generic icon
+                ].map((card, idx) => (
+                    <div key={idx} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">{card.title}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">{card.subtitle}</p>
                             </div>
-
-                             <SidebarItem 
-                                icon={ChatIcon} 
-                                label="Suporte e Tickets" 
-                                to={`${basePath}/suporte`}
-                                active={isActive('/suporte')}
-                                adminMode={isAdmin} 
-                            />
-                            <SidebarItem 
-                                icon={SparklesIcon} 
-                                label="Configurações" 
-                                to={`${basePath}/config`}
-                                active={isActive('/config')}
-                                adminMode={isAdmin} 
-                            />
-                        </>
-                    ) : (
-                        // CONSULTANT MENU (Standard)
-                        <>
-                            <SidebarItem 
-                                icon={ChartBarIcon} 
-                                label="Visão Geral" 
-                                to={`${basePath}/dashboard`}
-                                active={isActive('/dashboard')}
-                                adminMode={isAdmin}
-                            />
-                            <SidebarItem 
-                                icon={ShoppingCartIcon} 
-                                label="Novo Pedido" 
-                                to={`${basePath}/novo-pedido`}
-                                active={isActive('/novo-pedido')}
-                                adminMode={isAdmin} 
-                            />
-                            <SidebarItem 
-                                icon={PackageIcon} 
-                                label="Meus Pedidos" 
-                                to={`${basePath}/meus-pedidos`}
-                                active={isActive('/meus-pedidos')}
-                                adminMode={isAdmin} 
-                            />
-
-                            <div className="px-6 mt-8 mb-4 text-[10px] font-extrabold uppercase tracking-widest text-gray-500">Crescimento</div>
-                            <SidebarItem 
-                                icon={PhotoIcon} 
-                                label="Marketing" 
-                                to={`${basePath}/materiais`}
-                                active={isActive('/materiais')}
-                                adminMode={isAdmin} 
-                            />
-                            <SidebarItem 
-                                icon={AcademicCapIcon} 
-                                label="UniBrotos" 
-                                to={`${basePath}/unibrotos`}
-                                active={isActive('/unibrotos')}
-                                adminMode={isAdmin} 
-                            />
-                             <SidebarItem 
-                                icon={UserPlusIcon} 
-                                label="Convidar" 
-                                to={`${basePath}/convidar`}
-                                active={isActive('/convidar')}
-                                adminMode={isAdmin} 
-                            />
-
-                            {(consultant.role === 'leader') && (
-                                <>
-                                    <div className="px-6 mt-8 mb-4 text-[10px] font-extrabold uppercase tracking-widest text-brand-earth">Gestão</div>
-                                    <SidebarItem 
-                                        icon={BriefcaseIcon} 
-                                        label="Meu Negócio" 
-                                        to={`${basePath}/meu-negocio`}
-                                        active={isActive('/meu-negocio')}
-                                        adminMode={isAdmin} 
-                                    />
-                                    <SidebarItem 
-                                        icon={BanknotesIcon} 
-                                        label="Financeiro" 
-                                        to={`${basePath}/financeiro`}
-                                        active={isActive('/financeiro')}
-                                        adminMode={isAdmin} 
-                                    />
-                                </>
-                            )}
-                        </>
-                    )}
-                </div>
-
-                {/* 4. Footer Action */}
-                <div className="p-6">
-                    <button 
-                        onClick={handleLogout}
-                        className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl transition-colors font-bold ${isAdmin ? 'bg-[#144d3b] text-red-300 hover:bg-red-900/20 hover:text-red-200' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                    >
-                        <LogoutIcon className="h-5 w-5" />
-                        Sair do Sistema
-                    </button>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-1 min-w-0 transition-all duration-300">
-                {/* Mobile Header */}
-                <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between lg:hidden">
-                    <button 
-                        onClick={() => setSidebarOpen(true)}
-                        className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                    >
-                        <MenuIcon />
-                    </button>
-                    <BrandLogo className="h-8" />
-                    <div className="w-8"></div> {/* Spacer */}
-                </header>
-
-                <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
-                    {children}
-                </div>
-            </main>
-        </div>
-    );
-};
-
-// --- AUTH SCREENS ---
-
-// Public Login Screen (NO Admin Magic)
-export const LoginScreen = () => {
-    const [credential, setCredential] = useState(''); // Unified credential (email or ID)
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
-
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
-        try {
-            let emailToAuth = credential;
-            let isEmail = credential.includes('@');
-
-            // --- 2. ID LOOKUP (If not email) ---
-            if (!isEmail) {
-                const { data: profiles, error: profileLookupError } = await supabase
-                    .from('consultants')
-                    .select('email, role')
-                    .eq('id', credential)
-                    .maybeSingle();
-
-                if (profileLookupError) {
-                    throw new Error('Erro ao buscar ID. Verifique a conexão.');
-                }
-                
-                if (!profiles) {
-                    throw new Error('ID não encontrado.');
-                }
-                
-                // Security check: if user is admin, force them to use the admin portal
-                if (profiles.role === 'admin') {
-                    throw new Error('Acesso administrativo restrito. Use o Portal Master.');
-                }
-                
-                emailToAuth = profiles.email;
-            }
-
-            // --- 3. STANDARD SUPABASE AUTH ---
-            const { data, error: authError } = await supabase.auth.signInWithPassword({
-                email: emailToAuth,
-                password
-            });
-
-            if (authError) throw authError;
-
-            // Redirect based on role
-            if (data.user) {
-                navigate('/consultor/dashboard');
-            }
-        } catch (err: any) {
-            setError(err.message || 'Erro ao entrar. Verifique suas credenciais.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-brand-dark-bg flex flex-col items-center justify-center p-4 relative overflow-hidden">
-             {/* Background Effects */}
-             <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-green-dark opacity-20 blur-[100px] rounded-full animate-float"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-earth opacity-10 blur-[100px] rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
-            </div>
-
-            {/* WHITE CARD CONTAINER (Solid White for Contrast) */}
-            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10 animate-slide-up border border-gray-100">
-                <div className="p-8 text-center bg-gray-50 border-b border-gray-100">
-                    <BrandLogo className="h-16 mx-auto mb-4" />
-                    <h2 className="text-2xl font-serif font-bold text-gray-800">Bem-vindo ao Clube</h2>
-                    <p className="text-gray-500 text-sm mt-2">Área exclusiva para Consultores.</p>
-                </div>
-                
-                <form onSubmit={handleLogin} className="p-8 space-y-6">
-                    {error && (
-                        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center border border-red-100">
-                            {error}
+                            <div className="p-2 bg-gray-50 text-brand-green-dark rounded-lg">
+                                <card.icon className="h-5 w-5" />
+                            </div>
                         </div>
-                    )}
-                    
-                    <div className="space-y-2">
-                        {/* UPDATED LABEL: ID Consultor */}
-                        <label className="text-sm font-bold text-gray-700 ml-1">ID Consultor</label>
-                        <input 
-                            type="text" 
-                            required
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-green-mid focus:ring-2 focus:ring-brand-green-light outline-none transition-all bg-gray-50 focus:bg-white"
-                            placeholder="Digite seu ID"
-                            value={credential}
-                            onChange={(e) => setCredential(e.target.value)}
-                        />
+                        <h3 className="text-2xl font-bold text-gray-900 mt-4">{card.value}</h3>
                     </div>
-                    
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 ml-1">Senha</label>
-                        <input 
-                            type="password" 
-                            required
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-green-mid focus:ring-2 focus:ring-brand-green-light outline-none transition-all bg-gray-50 focus:bg-white"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        className="w-full bg-brand-green-dark hover:bg-brand-green-mid text-white font-bold py-4 rounded-xl shadow-lg shadow-green-900/10 transition-all transform hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {loading ? 'Entrando...' : 'Acessar Painel'}
-                    </button>
-
-                    <div className="text-center pt-4 border-t border-gray-50">
-                        <p className="text-gray-500 text-sm">Ainda não faz parte?</p>
-                        <Link to="/cadastro" className="text-brand-green-dark font-bold hover:underline">
-                            Torne-se um Consultor
-                        </Link>
-                    </div>
-                </form>
-            </div>
-            <p className="mt-8 text-gray-500 text-sm relative z-10">© 2024 Brotos da Terra. Todos os direitos reservados.</p>
-        </div>
-    );
-};
-
-// NEW: Admin Login Screen (SECRET URL)
-export const AdminLoginScreen = () => {
-    const [credential, setCredential] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
-
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
-        try {
-            // --- 1. MAGIC ADMIN CHECK (Fallback for Setup - ONLY HERE) ---
-            if (credential === '000000' && password === 'jo1234') {
-                const adminEmail = 'admin@brotos.com';
-                
-                // Try direct login
-                const { data: loginData } = await supabase.auth.signInWithPassword({
-                    email: adminEmail,
-                    password: password
-                });
-
-                if (loginData.session) {
-                     navigate('/admin/dashboard');
-                     return;
-                }
-
-                // If fails, try to create (first time)
-                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                    email: adminEmail,
-                    password: password
-                });
-
-                if (signUpError) throw new Error('Falha ao criar admin automático.');
-
-                if (signUpData.user) {
-                     const { error: profileError } = await supabase.from('consultants').upsert({
-                         id: '000000',
-                         auth_id: signUpData.user.id,
-                         name: 'Administrador Geral',
-                         email: adminEmail,
-                         role: 'admin',
-                         whatsapp: '',
-                         created_at: new Date().toISOString()
-                     });
-
-                     if (profileError) throw profileError;
-                     navigate('/admin/dashboard');
-                     return;
-                }
-            }
-
-            // Normal Admin Login (Email/Password)
-            const { data, error: authError } = await supabase.auth.signInWithPassword({
-                email: credential, // Admin uses email usually
-                password
-            });
-
-            if (authError) throw authError;
-
-            // Redirect based on role
-            if (data.user) {
-                // Fetch fresh profile to be sure of role
-                const { data: profile } = await supabase
-                    .from('consultants')
-                    .select('role')
-                    .eq('auth_id', data.user.id)
-                    .single();
-
-                if (profile?.role === 'admin') {
-                    navigate('/admin/dashboard');
-                } else {
-                    setError('Esta conta não possui permissões administrativas.');
-                    await supabase.auth.signOut();
-                }
-            }
-        } catch (err: any) {
-            setError(err.message || 'Erro ao entrar. Credenciais inválidas.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-[#0A382A] flex flex-col items-center justify-center p-4 relative overflow-hidden">
-             {/* Dark Background Effects */}
-             <div className="absolute inset-0 z-0">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#0A382A] opacity-30 rounded-full blur-[120px]"></div>
+                ))}
             </div>
 
-            {/* WHITE CARD CONTAINER for Admin (High Contrast) */}
-            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10 animate-fade-in border border-gray-100">
-                <div className="p-8 text-center bg-[#0A382A] border-b border-[#0A382A]">
-                    <BrandLogo className="h-12 mx-auto mb-4 filter brightness-0 invert" />
-                    <h2 className="text-xl font-serif font-bold text-white tracking-wide">Portal Master</h2>
-                    <p className="text-green-200/50 text-xs mt-1 uppercase tracking-widest">Acesso Restrito</p>
+            {/* Revenue Simulator Section */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900">Simulador de Crescimento da Receita</h3>
+                        <p className="text-sm text-gray-500">Projeção baseada na taxa atual de recrutamento</p>
+                    </div>
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                        <button className="px-3 py-1 bg-white rounded-md text-xs font-bold shadow-sm text-gray-800">Mensal</button>
+                        <button className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-700">Trimestral</button>
+                    </div>
                 </div>
                 
-                <form onSubmit={handleLogin} className="p-8 space-y-6">
-                    {error && (
-                        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center border border-red-100">
-                            {error}
+                <div className="h-64 flex items-end justify-between gap-2 px-2">
+                    {[35, 42, 45, 50, 48, 55, 62, 68, 75, 80, 85, 92].map((h, i) => (
+                        <div key={i} className="w-full bg-brand-green-light rounded-t-sm relative group">
+                            <div 
+                                style={{ height: `${h}%` }} 
+                                className="absolute bottom-0 left-0 right-0 bg-brand-green-mid/80 rounded-t-sm group-hover:bg-brand-green-mid transition-colors"
+                            ></div>
                         </div>
-                    )}
-                    
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 ml-1">E-mail Administrativo</label>
-                        <input 
-                            type="text" 
-                            required
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#4CAF50] focus:ring-2 focus:ring-green-100 outline-none transition-all bg-gray-50 focus:bg-white"
-                            placeholder="admin@brotos.com"
-                            value={credential}
-                            onChange={(e) => setCredential(e.target.value)}
-                        />
-                    </div>
-                    
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 ml-1">Chave de Segurança</label>
-                        <input 
-                            type="password" 
-                            required
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#4CAF50] focus:ring-2 focus:ring-green-100 outline-none transition-all bg-gray-50 focus:bg-white"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        className="w-full bg-[#0A382A] hover:bg-[#144d3b] text-white font-bold py-4 rounded-xl shadow-lg shadow-green-900/20 transition-all transform hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed border border-white/10"
-                    >
-                        {loading ? 'Verificando...' : 'Acessar Sistema'}
-                    </button>
-                    
-                     <div className="text-center pt-2">
-                        <Link to="/login" className="text-sm text-gray-400 hover:text-[#0A382A] transition-colors">
-                            Voltar para Login de Consultor
-                        </Link>
-                    </div>
-                </form>
+                    ))}
+                </div>
+                <div className="flex justify-between mt-4 text-xs text-gray-400 font-medium uppercase tracking-wider">
+                    <span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span><span>Jun</span>
+                    <span>Jul</span><span>Ago</span><span>Set</span><span>Out</span><span>Nov</span><span>Dez</span>
+                </div>
             </div>
-             <p className="mt-8 text-white/20 text-xs relative z-10 font-mono">SECURE CONNECTION • 256-BIT ENCRYPTION</p>
         </div>
     );
 };
 
-// --- PLACEHOLDER COMPONENTS FOR EXPORTS (Fixing Module Exports) ---
-
-export const ConsultantRegister = () => (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
-        <h2 className="text-2xl font-bold mb-4 text-brand-green-dark">Cadastro de Consultor</h2>
-        <p className="text-gray-600">Formulário de cadastro aqui.</p>
-        <Link to="/login" className="text-brand-green-mid mt-4 inline-block font-bold">Voltar ao Login</Link>
-    </div>
+// Placeholder for missing icon in admin view
+const OrganizationChartIconPlaceholder = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-5 w-5"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+    </svg>
 );
 
+
+// --- Other Views (Placeholders/Implementations) ---
+
 export const MaterialsView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800">Materiais de Marketing</h2>
-        <p className="text-gray-500">Baixe imagens e textos para divulgação.</p>
+    <div className="animate-slide-up">
+        <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6">Materiais de Apoio</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
+                    <div className="aspect-video bg-gray-100 rounded-lg mb-4 flex items-center justify-center relative overflow-hidden">
+                        <PhotoIcon className="h-10 w-10 text-gray-300" />
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button className="bg-white text-gray-900 px-4 py-2 rounded-full font-bold text-sm">Visualizar</button>
+                        </div>
+                    </div>
+                    <h3 className="font-bold text-gray-900">Catálogo Digital 2024 - Ciclo {i}</h3>
+                    <p className="text-xs text-gray-500 mt-1 mb-4">PDF • 12.5 MB • Atualizado há 2 dias</p>
+                    <button className="w-full flex items-center justify-center gap-2 border border-gray-200 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-brand-green-light hover:text-brand-green-dark hover:border-brand-green-mid transition-colors">
+                        <DownloadIcon className="h-4 w-4" />
+                        Baixar Material
+                    </button>
+                </div>
+            ))}
+        </div>
     </div>
 );
 
 export const UniBrotosView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800">UniBrotos</h2>
-        <p className="text-gray-500">Área de treinamento e cursos.</p>
+    <div className="animate-slide-up">
+        <div className="bg-brand-dark-card rounded-2xl p-8 text-white mb-8 relative overflow-hidden">
+             <div className="relative z-10 max-w-2xl">
+                <h2 className="text-3xl font-serif font-bold mb-4">UniBrotos Academy</h2>
+                <p className="text-gray-300 text-lg mb-6">Capacitação exclusiva para consultores. Aumente suas vendas com conhecimento técnico e estratégias de mercado.</p>
+                <div className="flex gap-4">
+                    <button className="bg-brand-green-mid hover:bg-brand-green-mid/90 text-white px-6 py-3 rounded-xl font-bold transition-colors">
+                        Continuar de onde parei
+                    </button>
+                    <button className="bg-white/10 hover:bg-white/20 px-6 py-3 rounded-xl font-bold transition-colors backdrop-blur-sm">
+                        Ver Certificados
+                    </button>
+                </div>
+            </div>
+            <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-black/50 to-transparent hidden lg:block"></div>
+        </div>
+        
+        <h3 className="font-bold text-xl text-gray-900 mb-4">Trilhas de Conhecimento</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {['Iniciante: Primeiros Passos', 'Técnicas de Vendas Avançadas', 'Produtos: Aprofundamento'].map((track, i) => (
+                <div key={i} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-brand-green-mid transition-colors cursor-pointer group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-brand-green-light text-brand-green-dark rounded-lg group-hover:bg-brand-green-mid group-hover:text-white transition-colors">
+                            <AcademicCapIcon className="h-6 w-6" />
+                        </div>
+                        <span className="text-xs font-bold bg-gray-100 text-gray-500 px-2 py-1 rounded-md">4 Módulos</span>
+                    </div>
+                    <h4 className="font-bold text-lg text-gray-900 mb-2">{track}</h4>
+                    <p className="text-sm text-gray-500 mb-4">Domine os fundamentos e comece a vender com confiança.</p>
+                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                        <div style={{width: `${(i+1)*25}%`}} className="bg-brand-green-mid h-full rounded-full"></div>
+                    </div>
+                    <p className="text-xs text-right mt-1 text-gray-400">{(i+1)*25}% concluído</p>
+                </div>
+            ))}
+        </div>
     </div>
 );
 
-export const MyOrdersView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800">Meus Pedidos</h2>
-        <p className="text-gray-500">Histórico de pedidos realizados.</p>
-    </div>
-);
+export const MyOrdersView = () => {
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const orders: Order[] = [
+        { id: '202455', consultant_id: '007', date: '12/03/2024', items: '3x Kits Pomadas', total: 'R$ 675,90', status: 'Entregue' },
+        { id: '202456', consultant_id: '007', date: '28/02/2024', items: '1x Display Balcão', total: 'R$ 150,00', status: 'Enviado' },
+        { id: '202457', consultant_id: '007', date: '10/01/2024', items: '5x Kits Pomadas', total: 'R$ 1.050,00', status: 'Entregue' },
+    ];
+
+    return (
+        <div className="animate-slide-up">
+            <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6">Meus Pedidos</h2>
+            
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th className="px-6 py-4 font-bold text-gray-600 text-sm">Pedido</th>
+                            <th className="px-6 py-4 font-bold text-gray-600 text-sm">Data</th>
+                            <th className="px-6 py-4 font-bold text-gray-600 text-sm hidden md:table-cell">Itens</th>
+                            <th className="px-6 py-4 font-bold text-gray-600 text-sm">Total</th>
+                            <th className="px-6 py-4 font-bold text-gray-600 text-sm">Status</th>
+                            <th className="px-6 py-4"></th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                        {orders.map((order) => (
+                            <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
+                                <td className="px-6 py-4 font-bold text-gray-900">#{order.id}</td>
+                                <td className="px-6 py-4 text-sm text-gray-500">{order.date}</td>
+                                <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{order.items}</td>
+                                <td className="px-6 py-4 font-medium text-brand-green-dark">{order.total}</td>
+                                <td className="px-6 py-4">
+                                    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold border ${
+                                        order.status === 'Entregue' ? 'bg-green-50 text-green-700 border-green-100' : 
+                                        'bg-blue-50 text-blue-700 border-blue-100'
+                                    }`}>
+                                        {order.status}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <button 
+                                        onClick={() => setSelectedOrder(order)}
+                                        className="text-brand-green-mid hover:text-brand-green-dark font-medium text-sm"
+                                    >
+                                        Detalhes
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {selectedOrder && (
+                <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+            )}
+        </div>
+    );
+};
 
 export const NewOrderView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800">Novo Pedido</h2>
-        <p className="text-gray-500">Catálogo de produtos para compra.</p>
+    <div className="animate-slide-up max-w-4xl mx-auto">
+        <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">Novo Pedido</h2>
+        <p className="text-gray-500 mb-8">Selecione os produtos para reabastecer seu estoque.</p>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row gap-8 items-start">
+             <div className="w-full md:w-1/3 bg-gray-50 rounded-xl p-4 flex items-center justify-center">
+                <img src="https://i.imgur.com/ntlcx07.png" alt="Kit" className="max-h-64 object-contain mix-blend-multiply" />
+             </div>
+             <div className="flex-1">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h3 className="text-2xl font-bold text-gray-900">Kit Revenda Premium</h3>
+                        <p className="text-gray-500 mt-1">Caixa Master com 12 unidades</p>
+                    </div>
+                    <div className="bg-brand-green-light px-3 py-1 rounded-lg text-brand-green-dark font-bold text-sm">
+                        Mais Vendido
+                    </div>
+                </div>
+
+                <div className="mt-6 space-y-4">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                        <span>Frete Grátis para todo Brasil</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                        <span>Material de apoio incluso</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                        <span>Lucro de até 100% na revenda</span>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-8 border-t border-gray-100 flex items-end justify-between">
+                    <div>
+                        <p className="text-sm text-gray-400 line-through">R$ 420,00</p>
+                        <p className="text-3xl font-bold text-brand-green-dark">R$ 210,00</p>
+                        <p className="text-xs text-gray-500">ou 3x de R$ 70,00 sem juros</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center border border-gray-200 rounded-lg h-12">
+                             <button className="px-3 hover:bg-gray-50 h-full text-gray-500">-</button>
+                             <span className="px-3 font-bold text-gray-900">1</span>
+                             <button className="px-3 hover:bg-gray-50 h-full text-gray-500">+</button>
+                        </div>
+                        <button className="bg-brand-green-mid hover:bg-brand-green-dark text-white px-8 h-12 rounded-xl font-bold transition-colors shadow-lg shadow-brand-green-mid/30">
+                            Adicionar ao Carrinho
+                        </button>
+                    </div>
+                </div>
+             </div>
+        </div>
     </div>
 );
 
 export const InviteView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800">Convidar Consultores</h2>
-        <p className="text-gray-500">Link de indicação e gestão de convites.</p>
+    <div className="animate-slide-up max-w-2xl mx-auto text-center pt-8">
+        <div className="bg-white rounded-3xl p-10 shadow-xl border border-gray-100 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-green-light via-brand-green-mid to-brand-green-dark"></div>
+            
+            <div className="bg-brand-green-light w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <UserPlusIcon className="h-10 w-10 text-brand-green-dark" />
+            </div>
+
+            <h2 className="text-3xl font-serif font-bold text-gray-900 mb-4">Expanda sua Rede</h2>
+            <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+                Convide novos consultores e ganhe comissões sobre as vendas da sua equipe. Construa seu legado na Brotos da Terra.
+            </p>
+
+            <div className="bg-gray-50 p-4 rounded-xl flex items-center gap-4 border border-gray-200 mb-8">
+                <div className="flex-1 text-left">
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Seu Link de Convite</p>
+                    <p className="text-gray-800 font-medium truncate font-mono text-sm">brotosdaterra.com.br/convite/ana-silva-2024</p>
+                </div>
+                <button className="bg-white border border-gray-200 p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600">
+                    <ClipboardCopyIcon className="h-5 w-5" />
+                </button>
+            </div>
+
+            <div className="flex flex-col gap-3">
+                <button className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg">
+                    <WhatsAppIcon className="h-6 w-6" />
+                    Enviar por WhatsApp
+                </button>
+                <button className="w-full bg-brand-green-dark hover:bg-gray-900 text-white py-4 rounded-xl font-bold transition-colors">
+                    Copiar Convite Personalizado
+                </button>
+            </div>
+        </div>
     </div>
 );
 
-export const BusinessView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800">Meu Negócio</h2>
-        <p className="text-gray-500">Visão detalhada da sua rede e desempenho.</p>
-    </div>
-);
+// --- Admin/Leader Specific Views ---
+
+export const BusinessView = () => {
+    // Shows team structure
+    const team = DB_LOCAL_STATE.team;
+
+    return (
+        <div className="animate-slide-up">
+            <div className="flex justify-between items-end mb-8">
+                 <div>
+                    <h2 className="text-2xl font-serif font-bold text-gray-900">Minha Rede</h2>
+                    <p className="text-gray-500">Gestão de equipe e desempenho.</p>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <table className="w-full text-left">
+                     <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Consultor</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Status</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Vendas (Mês)</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Cidade</th>
+                            <th className="px-6 py-4"></th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                        {team.map((member) => (
+                            <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-brand-green-light text-brand-green-dark flex items-center justify-center font-bold text-sm">
+                                            {member.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900">{member.name}</p>
+                                            <p className="text-xs text-gray-500">{member.role}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                        member.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                    }`}>
+                                        {member.status}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 font-mono text-gray-700">{member.sales}</td>
+                                <td className="px-6 py-4 text-sm text-gray-500">{member.city} - {member.state}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <button className="text-gray-400 hover:text-brand-green-mid">
+                                        <ChatIcon className="h-5 w-5" />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
 
 export const FinancialView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800">Financeiro</h2>
-        <p className="text-gray-500">Extrato, saldo e solicitações de saque.</p>
+    <div className="animate-slide-up max-w-4xl mx-auto">
+        <div className="bg-brand-dark-card text-white rounded-3xl p-8 mb-8 shadow-2xl relative overflow-hidden">
+            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
+                <div>
+                    <p className="text-gray-400 text-sm font-medium mb-1">Saldo Disponível para Saque</p>
+                    <h2 className="text-4xl md:text-5xl font-bold text-white">{formatCurrency(3450.00)}</h2>
+                </div>
+                <button className="bg-brand-green-mid hover:bg-brand-green-mid/90 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-brand-green-mid/20 w-full md:w-auto">
+                    Solicitar Saque
+                </button>
+            </div>
+        </div>
+
+        <h3 className="font-serif font-bold text-gray-900 mb-4 text-xl">Histórico de Transações</h3>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="p-6 border-b border-gray-50 last:border-0 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-full ${i % 2 === 0 ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                            {i % 2 === 0 ? <TrendingUpIcon className="h-5 w-5" /> : <BanknotesIcon className="h-5 w-5" />}
+                        </div>
+                        <div>
+                            <p className="font-bold text-gray-900">{i % 2 === 0 ? 'Comissão de Venda Direta' : 'Bônus de Liderança'}</p>
+                            <p className="text-xs text-gray-500">12 de Março, 14:30</p>
+                        </div>
+                    </div>
+                    <p className={`font-bold ${i % 2 === 0 ? 'text-green-600' : 'text-blue-600'}`}>+ R$ {i * 150},00</p>
+                </div>
+            ))}
+        </div>
     </div>
 );
 
-// --- ADMIN SPECIFIC VIEWS ---
+// --- Admin Sub-Views ---
+
+export const AdminPanelView = () => (
+    <div className="animate-slide-up">
+        <h2 className="text-2xl font-serif font-bold mb-6">Gerenciamento de Usuários</h2>
+        <BusinessView />
+    </div>
+);
 
 export const AdminGoalsView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-[#0A382A]">Metas da Rede</h2>
-        <p className="text-gray-500">Definição e acompanhamento de metas globais.</p>
+    <div className="animate-slide-up">
+        <h2 className="text-2xl font-serif font-bold mb-6">Metas e Desempenho</h2>
+        <div className="bg-white p-12 rounded-xl text-center border border-gray-100">
+            <TargetIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-gray-900">Configuração de Metas</h3>
+            <p className="text-gray-500">Defina metas mensais para cada nível de consultor.</p>
+        </div>
     </div>
 );
 
 export const AdminWithdrawalsView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-[#0A382A]">Solicitações de Saque</h2>
-        <p className="text-gray-500">Gerenciamento de pagamentos de comissões.</p>
+    <div className="animate-slide-up">
+        <h2 className="text-2xl font-serif font-bold mb-6">Solicitações de Saque</h2>
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <p className="text-gray-500 text-center py-8">Nenhuma solicitação pendente.</p>
+        </div>
     </div>
 );
 
 export const AdminReportsView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-[#0A382A]">Relatórios Gerenciais</h2>
-        <p className="text-gray-500">Relatórios detalhados de vendas e crescimento.</p>
+    <div className="animate-slide-up">
+        <h2 className="text-2xl font-serif font-bold mb-6">Relatórios Detalhados</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm h-64 flex items-center justify-center">
+                <p className="text-gray-400 font-medium">Gráfico de Vendas</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm h-64 flex items-center justify-center">
+                <p className="text-gray-400 font-medium">Mapa de Calor (Geolocalização)</p>
+            </div>
+        </div>
     </div>
 );
 
 export const AdminSupportView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-[#0A382A]">Suporte</h2>
-        <p className="text-gray-500">Tickets e atendimento aos consultores.</p>
+    <div className="animate-slide-up">
+         <h2 className="text-2xl font-serif font-bold mb-6">Central de Suporte</h2>
+         <p className="text-gray-500">Gerenciamento de tickets e atendimento.</p>
     </div>
 );
 
 export const AdminSettingsView = () => (
-    <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-[#0A382A]">Configurações</h2>
-        <p className="text-gray-500">Parâmetros do sistema e permissões.</p>
+    <div className="animate-slide-up">
+         <h2 className="text-2xl font-serif font-bold mb-6">Configurações do Sistema</h2>
+         <p className="text-gray-500">Parâmetros globais, permissões e integrações.</p>
     </div>
 );
+
+// --- Auth Components (Simplified) ---
+
+export const ConsultantRegister = () => (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full">
+            <div className="text-center mb-8">
+                <BrandLogo className="h-12 mx-auto mb-4" />
+                <h2 className="text-2xl font-serif font-bold">Junte-se a Nós</h2>
+                <p className="text-gray-500 text-sm mt-2">Crie sua conta de consultor</p>
+            </div>
+            <form className="space-y-4">
+                <input type="text" placeholder="Nome Completo" className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:border-brand-green-mid" />
+                <input type="email" placeholder="E-mail" className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:border-brand-green-mid" />
+                <input type="password" placeholder="Senha" className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:border-brand-green-mid" />
+                <button className="w-full bg-brand-green-mid text-white py-3 rounded-lg font-bold hover:bg-brand-green-dark transition-colors">
+                    Cadastrar
+                </button>
+            </form>
+            <p className="text-center mt-6 text-sm text-gray-500">
+                Já tem conta? <Link to="/login" className="text-brand-green-mid font-bold">Entrar</Link>
+            </p>
+        </div>
+    </div>
+);
+
+export const LoginScreen = () => {
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        // Simulate login
+        setTimeout(() => {
+            navigate('/consultor/dashboard');
+            setLoading(false);
+        }, 1000);
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full">
+                <div className="text-center mb-8">
+                    <BrandLogo className="h-12 mx-auto mb-4" />
+                    <h2 className="text-2xl font-serif font-bold">Portal do Consultor</h2>
+                    <p className="text-gray-500 text-sm mt-2">Acesse sua área exclusiva</p>
+                </div>
+                <form onSubmit={handleLogin} className="space-y-4">
+                    <input type="email" placeholder="E-mail" className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:border-brand-green-mid" />
+                    <input type="password" placeholder="Senha" className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:border-brand-green-mid" />
+                    <button disabled={loading} className="w-full bg-brand-green-mid text-white py-3 rounded-lg font-bold hover:bg-brand-green-dark transition-colors disabled:opacity-70">
+                        {loading ? 'Entrando...' : 'Entrar'}
+                    </button>
+                </form>
+                <div className="mt-6 text-center space-y-2">
+                    <Link to="/cadastro" className="block text-sm text-brand-green-mid font-bold">Quero ser um consultor</Link>
+                    <Link to="/portal-master" className="block text-xs text-gray-400">Acesso Administrativo</Link>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export const AdminLoginScreen = () => {
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+
+    const handleAdminLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        // Simulate admin login
+        setTimeout(() => {
+            navigate('/admin/dashboard');
+            setLoading(false);
+        }, 1000);
+    };
+
+    return (
+        <div className="min-h-screen bg-brand-dark-bg flex items-center justify-center p-4">
+            <div className="bg-brand-dark-card p-8 rounded-2xl shadow-2xl max-w-md w-full border border-gray-800">
+                <div className="text-center mb-8">
+                    <div className="h-16 w-16 bg-brand-green-dark rounded-full flex items-center justify-center mx-auto mb-4 border border-brand-green-mid/30">
+                        <LockClosedIcon className="h-8 w-8 text-brand-green-mid" />
+                    </div>
+                    <h2 className="text-2xl font-serif font-bold text-white">Portal Master</h2>
+                    <p className="text-gray-400 text-sm mt-2">Acesso restrito à administração</p>
+                </div>
+                <form onSubmit={handleAdminLogin} className="space-y-4">
+                    <div className="relative">
+                        <UserCircleIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-500" />
+                        <input type="text" placeholder="ID Admin" className="w-full pl-12 pr-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-brand-green-mid focus:ring-1 focus:ring-brand-green-mid" />
+                    </div>
+                    <div className="relative">
+                        <LockClosedIcon className="absolute left-4 top-3.5 h-5 w-5 text-gray-500" />
+                        <input type="password" placeholder="Senha Forte" className="w-full pl-12 pr-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-brand-green-mid focus:ring-1 focus:ring-brand-green-mid" />
+                    </div>
+                    <button disabled={loading} className="w-full bg-brand-green-mid hover:bg-brand-green-mid/90 text-white py-3 rounded-lg font-bold transition-all shadow-lg shadow-brand-green-mid/20 disabled:opacity-50">
+                        {loading ? 'Validando Credenciais...' : 'Acessar Sistema'}
+                    </button>
+                </form>
+                <div className="mt-8 pt-6 border-t border-gray-800 text-center">
+                    <Link to="/login" className="text-xs text-gray-500 hover:text-white transition-colors">Voltar para Login Consultor</Link>
+                </div>
+            </div>
+        </div>
+    );
+};

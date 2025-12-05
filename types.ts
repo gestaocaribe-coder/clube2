@@ -1,4 +1,3 @@
-
 // FIX: Import React to provide the React namespace for React.ReactNode.
 import type * as React from 'react';
 
@@ -19,6 +18,10 @@ export interface Consultant {
     role: ConsultantRole; // 'tipo_usuario'
     parent_id?: string; // 'id_convidante'
     created_at: string;
+}
+
+export interface DashboardContextType {
+    consultant: Consultant | null;
 }
 
 export interface ConsultantStats {
