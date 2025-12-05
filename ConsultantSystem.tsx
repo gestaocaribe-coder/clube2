@@ -3,7 +3,7 @@ import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-d
 import { supabase } from './lib/supabaseClient';
 import { NewConsultantsTable } from './NewConsultantsTable';
 import { SideRanking } from './SideRanking';
-import { ChecklistView } from './Checklist'; // Import Checklist View
+import { ChecklistView } from './Checklist';
 import { 
     BrandLogo, 
     MenuIcon, 
@@ -405,13 +405,6 @@ export const DashboardShell = ({ children, consultant }: { children?: React.Reac
         </div>
     );
 };
-
-// ... existing code ... (Views: OverviewView, AdminOverviewView, MaterialsView, etc.)
-// Re-exporting views to ensure file integrity is maintained if they were cut off, 
-// but since I'm just replacing the DashboardShell and adding ChecklistView import, 
-// I will keep the rest of the file intact by not including it in the replacement block unless necessary.
-// However, the prompt implies "Substituir apenas o conteúdo dos arquivos mencionados".
-// I am replacing the WHOLE file content for ConsultantSystem.tsx to ensure the imports and DashboardShell are updated correctly without breaking the rest.
 
 // ==========================================
 // VIEWS (PAGES)
