@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-
 import { supabase } from './lib/supabaseClient';
 import { Consultant } from './types';
 import { AdminGuard } from './src/guards/AdminGuard';
+import { ChecklistView } from './Checklist';
 import { 
     LoginScreen, 
     AdminLoginScreen,
@@ -110,6 +111,13 @@ export default function App() {
         
         {/* Portal Master Login */}
         <Route path="/portal-master" element={<AdminLoginScreen />} />
+
+        {/* Public Checklist Route */}
+        <Route path="/checklist" element={
+            <DashboardShell>
+                <ChecklistView />
+            </DashboardShell>
+        } />
 
         {/* SECURE ADMIN ROUTES (Protected by Edge Function Guard) */}
         <Route path="/admin" element={

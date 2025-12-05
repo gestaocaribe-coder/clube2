@@ -4,30 +4,29 @@ const verifyToken = require('../middleware/verifyToken');
 const verifyMasterRole = require('../middleware/verifyMasterRole');
 const supabase = require('../lib/supabase');
 
-// Middleware Global da Rota: Apenas Admin pode acessar qualquer rota aqui
+// Apply protection to all routes in this router
 router.use(verifyToken);
 router.use(verifyMasterRole);
 
-// GET /consultants/all - Lista todos os consultores (sem paginação para MVP)
+// GET /consultants/all
 router.get('/all', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('consultants')
-      .select('id, name, email, role, status, created_at, parent_id')
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
 
     res.json(data);
   } catch (err) {
-    console.error('Erro ao listar consultores:', err);
-    res.status(500).json({ error: 'Erro ao buscar consultores' });
+    console.error('Error fetching consultants:', err);
+    res.status(500).json({ error: 'Failed to fetch consultants' });
   }
 });
 
-// Função auxiliar para busca recursiva
+// Helper for recursive tree building
 async function buildTree(consultantId) {
-  // Busca o nó atual
   const { data: current, error } = await supabase
     .from('consultants')
     .select('id, name, role, status, email')
@@ -36,7 +35,6 @@ async function buildTree(consultantId) {
 
   if (error || !current) return null;
 
-  // Busca filhos diretos (Indicações diretas)
   const { data: children } = await supabase
     .from('consultants')
     .select('id')
@@ -59,22 +57,20 @@ async function buildTree(consultantId) {
   };
 }
 
-// GET /consultants/tree/:id - Monta árvore de indicações
+// GET /consultants/tree/:id
 router.get('/tree/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // Inicia a busca recursiva
     const tree = await buildTree(id);
 
     if (!tree) {
-      return res.status(404).json({ error: 'Consultor raiz não encontrado' });
+      return res.status(404).json({ error: 'Root consultant not found' });
     }
 
     res.json(tree);
   } catch (err) {
-    console.error('Erro ao montar árvore:', err);
-    res.status(500).json({ error: 'Erro ao processar árvore de indicações' });
+    console.error('Error building tree:', err);
+    res.status(500).json({ error: 'Failed to build referral tree' });
   }
 });
 

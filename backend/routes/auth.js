@@ -3,7 +3,7 @@ const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
 const supabase = require('../lib/supabase');
 
-// Rota para verificar estado atual do usuário (Me)
+// GET /auth/me
 router.get('/me', verifyToken, async (req, res) => {
   try {
     const { data: profile, error } = await supabase
@@ -13,7 +13,7 @@ router.get('/me', verifyToken, async (req, res) => {
       .single();
 
     if (error) {
-      return res.status(404).json({ error: 'Perfil não encontrado' });
+      return res.status(404).json({ error: 'Profile not found' });
     }
 
     res.json({
@@ -21,7 +21,7 @@ router.get('/me', verifyToken, async (req, res) => {
       profile: profile
     });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao buscar dados do usuário' });
+    res.status(500).json({ error: 'Error fetching user data' });
   }
 });
 

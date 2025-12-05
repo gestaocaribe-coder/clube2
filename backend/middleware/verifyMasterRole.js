@@ -3,10 +3,9 @@ const supabase = require('../lib/supabase');
 const verifyMasterRole = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
-      return res.status(401).json({ error: 'Usuário não autenticado' });
+      return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    // Busca o perfil do usuário na tabela pública
     const { data: profile, error } = await supabase
       .from('consultants')
       .select('role')
@@ -14,19 +13,18 @@ const verifyMasterRole = async (req, res, next) => {
       .single();
 
     if (error || !profile) {
-      return res.status(404).json({ error: 'Perfil de consultor não encontrado' });
+      return res.status(404).json({ error: 'User profile not found' });
     }
 
     if (profile.role !== 'admin') {
-      console.warn(`Acesso negado: Usuário ${req.user.id} tentou acessar rota admin.`);
-      return res.status(403).json({ error: 'Acesso negado. Apenas administradores.' });
+      return res.status(403).json({ error: 'Access denied. Admins only.' });
     }
 
     next();
 
   } catch (err) {
-    console.error('Erro na verificação de role:', err);
-    return res.status(500).json({ error: 'Erro interno na verificação de permissões' });
+    console.error('Role verification failed:', err);
+    return res.status(500).json({ error: 'Internal permission error' });
   }
 };
 

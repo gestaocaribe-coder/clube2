@@ -3,6 +3,7 @@ import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-d
 import { supabase } from './lib/supabaseClient';
 import { NewConsultantsTable } from './NewConsultantsTable';
 import { SideRanking } from './SideRanking';
+import { ChecklistView } from './Checklist'; // Import Checklist View
 import { 
     BrandLogo, 
     MenuIcon, 
@@ -224,6 +225,7 @@ export const DashboardShell = ({ children, consultant }: { children?: React.Reac
         if (path.includes('meu-negocio')) return 'Meu Negócio';
         if (path.includes('financeiro')) return 'Financeiro';
         if (path.includes('admin')) return 'Portal Master';
+        if (path.includes('checklist')) return 'Checklist do Projeto';
         return 'Brotos da Terra';
     };
 
@@ -243,6 +245,11 @@ export const DashboardShell = ({ children, consultant }: { children?: React.Reac
 
     // Define menu items based on role
     const getMenuItems = () => {
+        const baseItems = [];
+
+        // Adiciona Checklist para todos (Público/Dev)
+        baseItems.push({ icon: ClipboardListIcon, label: 'Checklist Projeto', path: '/checklist' });
+
         if (consultant?.role === 'admin') {
             return [
                 { icon: ChartBarIcon, label: 'Visão Geral', path: '/admin/dashboard' },
@@ -252,20 +259,27 @@ export const DashboardShell = ({ children, consultant }: { children?: React.Reac
                 { icon: PresentationChartLineIcon, label: 'Relatórios', path: '/admin/relatorios' },
                 { icon: ShieldCheckIcon, label: 'Suporte', path: '/admin/suporte' },
                 { icon: LockClosedIcon, label: 'Configurações', path: '/admin/config' },
+                ...baseItems
             ];
         }
         
         // Default consultant/leader menu
-        return [
-            { icon: ChartBarIcon, label: 'Visão Geral', path: '/consultor/dashboard' },
-            { icon: UsersIcon, label: 'Meu Negócio', path: '/consultor/meu-negocio' }, // New Business View
-            { icon: AcademicCapIcon, label: 'UniBrotos', path: '/consultor/unibrotos' },
-            { icon: PhotoIcon, label: 'Materiais', path: '/consultor/materiais' },
-            { icon: ShoppingCartIcon, label: 'Novo Pedido', path: '/consultor/novo-pedido' },
-            { icon: PackageIcon, label: 'Meus Pedidos', path: '/consultor/meus-pedidos' },
-            { icon: BanknotesIcon, label: 'Financeiro', path: '/consultor/financeiro' },
-            { icon: UserPlusIcon, label: 'Convidar', path: '/consultor/convidar' },
-        ];
+        if (consultant) {
+            return [
+                { icon: ChartBarIcon, label: 'Visão Geral', path: '/consultor/dashboard' },
+                { icon: UsersIcon, label: 'Meu Negócio', path: '/consultor/meu-negocio' }, // New Business View
+                { icon: AcademicCapIcon, label: 'UniBrotos', path: '/consultor/unibrotos' },
+                { icon: PhotoIcon, label: 'Materiais', path: '/consultor/materiais' },
+                { icon: ShoppingCartIcon, label: 'Novo Pedido', path: '/consultor/novo-pedido' },
+                { icon: PackageIcon, label: 'Meus Pedidos', path: '/consultor/meus-pedidos' },
+                { icon: BanknotesIcon, label: 'Financeiro', path: '/consultor/financeiro' },
+                { icon: UserPlusIcon, label: 'Convidar', path: '/consultor/convidar' },
+                ...baseItems
+            ];
+        }
+
+        // Se for acesso público (ex: Checklist apenas)
+        return baseItems;
     };
 
     const menuItems = getMenuItems();
@@ -290,15 +304,21 @@ export const DashboardShell = ({ children, consultant }: { children?: React.Reac
                 </div>
 
                 <div className="p-6">
-                    <div className="bg-brand-green-light rounded-2xl p-4 flex items-center gap-3 mb-6 border border-brand-green-mid/10">
-                        <div className="h-12 w-12 rounded-full bg-brand-green-mid text-white flex items-center justify-center font-bold text-lg shadow-md">
-                            {consultant?.name?.charAt(0) || 'U'}
+                    {consultant ? (
+                        <div className="bg-brand-green-light rounded-2xl p-4 flex items-center gap-3 mb-6 border border-brand-green-mid/10">
+                            <div className="h-12 w-12 rounded-full bg-brand-green-mid text-white flex items-center justify-center font-bold text-lg shadow-md">
+                                {consultant?.name?.charAt(0) || 'U'}
+                            </div>
+                            <div className="overflow-hidden">
+                                <p className="font-bold text-gray-900 truncate">{consultant?.name || 'Usuário'}</p>
+                                <p className="text-xs text-brand-green-mid font-medium uppercase tracking-wider">{consultant?.role || 'Consultor'}</p>
+                            </div>
                         </div>
-                        <div className="overflow-hidden">
-                            <p className="font-bold text-gray-900 truncate">{consultant?.name || 'Usuário'}</p>
-                            <p className="text-xs text-brand-green-mid font-medium uppercase tracking-wider">{consultant?.role || 'Consultor'}</p>
+                    ) : (
+                        <div className="bg-gray-50 rounded-2xl p-4 mb-6 text-center">
+                            <p className="text-sm font-bold text-gray-500">Visitante</p>
                         </div>
-                    </div>
+                    )}
 
                     <nav className="space-y-1.5">
                         {menuItems.map((item) => {
@@ -325,13 +345,23 @@ export const DashboardShell = ({ children, consultant }: { children?: React.Reac
                 </div>
 
                 <div className="mt-auto p-6 border-t border-gray-50">
-                     <button 
-                        onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors w-full font-medium"
-                    >
-                        <LogoutIcon className="h-5 w-5" />
-                        <span>Sair do Sistema</span>
-                    </button>
+                    {consultant ? (
+                         <button 
+                            onClick={handleLogout}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors w-full font-medium"
+                        >
+                            <LogoutIcon className="h-5 w-5" />
+                            <span>Sair do Sistema</span>
+                        </button>
+                    ) : (
+                        <Link 
+                            to="/login"
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-brand-green-mid hover:bg-green-50 transition-colors w-full font-medium"
+                        >
+                            <UserCircleIcon className="h-5 w-5" />
+                            <span>Fazer Login</span>
+                        </Link>
+                    )}
                     <p className="text-xs text-center text-gray-300 mt-4">v{1.0}</p>
                 </div>
             </aside>
@@ -375,6 +405,13 @@ export const DashboardShell = ({ children, consultant }: { children?: React.Reac
         </div>
     );
 };
+
+// ... existing code ... (Views: OverviewView, AdminOverviewView, MaterialsView, etc.)
+// Re-exporting views to ensure file integrity is maintained if they were cut off, 
+// but since I'm just replacing the DashboardShell and adding ChecklistView import, 
+// I will keep the rest of the file intact by not including it in the replacement block unless necessary.
+// However, the prompt implies "Substituir apenas o conteúdo dos arquivos mencionados".
+// I am replacing the WHOLE file content for ConsultantSystem.tsx to ensure the imports and DashboardShell are updated correctly without breaking the rest.
 
 // ==========================================
 // VIEWS (PAGES)

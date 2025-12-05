@@ -8,20 +8,19 @@ const consultantsRoutes = require('./routes/consultants');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Configuração de Middlewares
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Rotas da API
+// Routes
 app.use('/auth', authRoutes);
 app.use('/consultants', consultantsRoutes);
 
-// Rota de Healthcheck
+// Health Check
 app.get('/', (req, res) => {
-  res.json({ status: 'API Portal Master Online', timestamp: new Date() });
+  res.json({ status: 'API Online', timestamp: new Date() });
 });
 
-// Inicialização do Servidor
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
