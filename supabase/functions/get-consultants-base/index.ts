@@ -1,8 +1,6 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-// FIX: Declare Deno global to fix "Cannot find name 'Deno'" errors in non-Deno TS environments
 declare const Deno: any;
 
 const corsHeaders = {
@@ -16,14 +14,12 @@ serve(async (req) => {
   }
 
   try {
-    // 1. Setup Client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     )
 
-    // 2. Validate User
     const {
       data: { user },
     } = await supabaseClient.auth.getUser()
@@ -35,7 +31,6 @@ serve(async (req) => {
       })
     }
 
-    // 3. Verify Admin Role (Security Check)
     const { data: profile } = await supabaseClient
       .from('consultants')
       .select('role')
@@ -49,7 +44,6 @@ serve(async (req) => {
       })
     }
 
-    // 4. Fetch All Consultants (Admin Action)
     const { data: consultants, error: dbError } = await supabaseClient
       .from('consultants')
       .select('*')

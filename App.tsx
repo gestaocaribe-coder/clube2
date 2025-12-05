@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
@@ -77,7 +76,7 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
 
     const userRole = user.role;
 
-    // Strict separation
+    // Separação Estrita de Ambientes
     if (userRole === 'admin' && location.pathname.startsWith('/consultor')) {
         return <Navigate to="/admin/dashboard" replace />;
     }

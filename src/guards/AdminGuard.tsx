@@ -20,11 +20,12 @@ export const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
             }
 
             try {
-                // Call the Edge Function to validate admin status securely
+                // Invoca a função de backend para validar se é admin de forma segura
                 const { data, error } = await supabase.functions.invoke('validate-admin');
 
                 if (error) {
-                    console.error('Admin validation error:', error);
+                    console.error('Erro na validação do admin:', error);
+                    // Em caso de erro na função (ex: não deployada), bloqueia por segurança
                     setIsAuthorized(false);
                     return;
                 }
@@ -35,7 +36,7 @@ export const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
                     setIsAuthorized(false);
                 }
             } catch (err) {
-                console.error('Guard system error:', err);
+                console.error('Erro sistêmico no Guard:', err);
                 setIsAuthorized(false);
             }
         };
@@ -44,7 +45,6 @@ export const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
     }, []);
 
     if (isAuthorized === null) {
-        // Loading State
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-green-mid mb-4"></div>
@@ -54,7 +54,7 @@ export const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
     }
 
     if (!isAuthorized) {
-        // Redirect logic: If logged in but not admin -> Consultant Dashboard.
+        // Se logado mas não autorizado, manda para o painel de consultor
         return <Navigate to="/consultor" state={{ from: location }} replace />;
     }
 

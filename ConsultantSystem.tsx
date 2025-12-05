@@ -1140,18 +1140,9 @@ export const AdminLoginScreen = () => {
             });
 
             if (data.session) {
-                // Login successful, now check role in DB or via metadata if set
-                // We will rely on ProtectedRoute to fetch the profile and verify 'admin' role
+                // Login successful, let the Guard handle redirection and verification
                 navigate('/admin/dashboard');
                 return;
-            }
-
-            // 2. Fallback: Simulated Admin (Only if specific credentials are used for dev/demo)
-            // This is kept for backward compatibility if backend isn't ready
-            if (email === 'admin' && password === 'root') {
-                 localStorage.setItem('sb-admin-session', 'true');
-                 navigate('/admin/dashboard');
-                 return;
             }
 
             if (error) {
