@@ -12,6 +12,13 @@ export const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
 
     useEffect(() => {
         const validateAccess = async () => {
+            // 1. BYPASS DE DESENVOLVIMENTO (Credencial Mestra)
+            if (localStorage.getItem('sb-admin-session') === 'true') {
+                setIsAuthorized(true);
+                return;
+            }
+
+            // 2. Validação Padrão via Supabase
             const { data: { session } } = await supabase.auth.getSession();
 
             if (!session) {

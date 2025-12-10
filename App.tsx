@@ -34,6 +34,24 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
 
     useEffect(() => {
         const checkAuth = async () => {
+            // 1. Verificação de Credencial Mestra (Dev/Demo)
+            if (localStorage.getItem('sb-admin-session') === 'true') {
+                // Cria um usuário Admin Simulado
+                setUser({
+                    id: 'master-001',
+                    auth_id: 'master-local-id',
+                    name: 'Master Admin',
+                    email: 'admin@master.com',
+                    whatsapp: '00000000000',
+                    role: 'admin', // Força papel de admin
+                    created_at: new Date().toISOString(),
+                    status: 'Ativo'
+                });
+                setLoading(false);
+                return;
+            }
+
+            // 2. Verificação Padrão Supabase
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 
