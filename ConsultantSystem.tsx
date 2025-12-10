@@ -49,7 +49,8 @@ import {
     ChatIcon,
     ClipboardListIcon,
     ShieldCheckIcon,
-    ShareIcon
+    ShareIcon,
+    StopIcon
 } from './components/Icons';
 import { Consultant, Order, DashboardContextType } from './types';
 
